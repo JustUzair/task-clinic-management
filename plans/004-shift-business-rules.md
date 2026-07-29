@@ -1,7 +1,6 @@
 # Plan 004: Shift business rules
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented; API validation and database-backed claim rules are active.
 
 ## Shift definition
 
@@ -12,6 +11,8 @@ started.
 - An end time earlier than the start is an overnight shift ending the following
   day.
 - Equal start and end times are invalid zero-duration shifts.
+- A create or edit whose resolved start instant is not in the future is
+  rejected using database time; the form disables already-passed IST choices.
 - The system does not enforce minimum or maximum working hours. Managers and
   staff decide whether a shift's duration is appropriate.
 - The UI uses a 24-hour clock and visibly marks an overnight end as next-day.

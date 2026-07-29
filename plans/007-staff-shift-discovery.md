@@ -1,7 +1,6 @@
 # Plan 007: Staff shift discovery
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented in the staff API and minimal responsive dashboard.
 
 ## Available shifts
 

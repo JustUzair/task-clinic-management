@@ -1,7 +1,7 @@
 # Plan 006: Durable notifications and live dashboards
 
-Status: accepted during the system-rules grilling; this is a deliberate product
-extension beyond the project brief, and implementation has not started.
+Status: implemented for durable acknowledgement and single-instance SSE; the
+documented cross-instance scaling route remains deferred.
 
 ## Notification model
 
@@ -90,3 +90,10 @@ while PostgreSQL remains authoritative for notification acknowledgement.
   and staff cannot subscribe to manager coverage or import events.
 - SSE interruption does not lose state, and each open client uses one stream
   for all dashboard event types.
+
+## Time-box fallback
+
+If auth, CRUD, claims, imports, and coverage are not deployed and stable by the
+end of implementation day 3, omit the acknowledgement-inbox UI. Keep durable
+notification rows and SSE-triggered refetches, and defer the remaining Plan 006
+UI and verification until after the graded core is proven.

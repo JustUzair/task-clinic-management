@@ -1,7 +1,6 @@
 # Plan 010: Manager import entry points
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented with separate manager UI controls and authorized handlers.
 
 ## Manager flow
 

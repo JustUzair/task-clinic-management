@@ -1,7 +1,10 @@
 # Plan 012: Weekly dashboard draft
 
-Status: provisional UX draft; subject to revision after the working backend and
-basic frontend are available.
+Status: basic responsive implementation complete; visual refinement remains
+intentionally deferred.
+
+Material UI provides the shared responsive component system; route pages remain
+thin and compose feature-specific components.
 
 ## Initial working direction
 

@@ -1,7 +1,7 @@
 # Plan 001: Passwordless authentication and staff foundation
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented; OTP, session, authorization, schema, and automated identity
+tests are in place.
 
 ## Decisions
 
@@ -13,11 +13,16 @@ started.
   roles and preserve every raw value in the import report.
 - Every valid imported staff account is immediately eligible for email OTP
   login. There is no password or manager-activation state.
+- OTP is deliberate because `staff.csv` contains no password field; inventing
+  seeded passwords would not be an import of the supplied source.
 - Store only an HMAC of the OTP in Redis. OTPs are one-time, short-lived,
   attempt-limited, and request-rate-limited.
 - Successful verification creates a secure `HttpOnly` session with a 24-hour
   absolute maximum. Without “remember me” the browser cookie is session-only;
   with it, the cookie persists for at most 24 hours.
+- The session cookie contains a signed JWT with issuer, audience, subject,
+  issued-at, and expiry claims. Only the account ID is carried; authorization
+  reloads the durable account from PostgreSQL.
 - Use Supabase PostgreSQL, Prisma, and Upstash Redis. Mailtrap Sandbox is the
   local and evaluator-supplied test-email adapter; see Plan 002.
 
@@ -45,3 +50,15 @@ started.
 The public OTP-request response is identical for existing and unknown email
 addresses. Unknown addresses do not create a usable challenge or send email,
 but the response does not disclose account membership.
+
+## Time-box fallback
+
+If OTP request, Mailtrap delivery, verification, and session creation are not
+working end to end by the end of implementation day 1, switch `AUTH_MODE` to
+seeded password authentication. Hash the environment-supplied fallback password,
+do not persist plaintext, document the fallback in the README, and spend the
+remaining schedule on the graded core.
+
+`Account.password_hash` may remain nullable so this fallback does not require a
+late schema redesign. It stays null in OTP mode and is populated from
+`FALLBACK_SEEDED_PASSWORD` only when password mode is deliberately activated.

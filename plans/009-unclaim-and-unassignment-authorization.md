@@ -1,7 +1,6 @@
 # Plan 009: Unclaim and unassignment authorization
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented and covered by database integration tests.
 
 ## Current behavior
 

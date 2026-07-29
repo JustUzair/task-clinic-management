@@ -1,7 +1,6 @@
 # Plan 005: Shift lifecycle and archival
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented with retained lifecycle and assignment audit records.
 
 ## Lifecycle rule
 

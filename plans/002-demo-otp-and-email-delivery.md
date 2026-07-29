@@ -1,14 +1,14 @@
 # Plan 002: Demo OTP and email delivery
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented; demo and Mailtrap adapters are in place. Live Mailtrap
+delivery still depends on evaluator-supplied credentials.
 
 ## One OTP protocol
 
 1. The user enters an imported email and requests an OTP.
 2. The server applies the per-email send limit and creates an `otpSessionId`.
 3. In normal mode, it generates a random six-digit OTP. In demo mode, an
-   allowlisted seeded account uses the fixed `DEMO_OTP_CODE`, such as `123456`.
+   existing valid account uses the fixed `DEMO_OTP_CODE`, such as `123456`.
 4. The server stores only the OTP HMAC and account context at
    `otp:session:<otpSessionId>` with a short TTL.
 5. The configured email adapter receives the same OTP for delivery.
@@ -20,7 +20,9 @@ started.
 ## Safety boundaries
 
 - `DEMO_AUTH_ENABLED` is false by default.
-- The fixed code applies only to explicitly seeded demo accounts.
+- The fixed code applies to every valid account currently stored in PostgreSQL,
+  including staff created by later CSV imports.
+- Unknown or rejected emails do not receive a usable OTP challenge.
 - Requesting an OTP remains mandatory; the fixed code cannot create a session
   without a live Redis challenge.
 - Demo requests retain OTP expiry, one-time use, send limits, and verification

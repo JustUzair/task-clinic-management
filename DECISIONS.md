@@ -9,6 +9,10 @@ synchronization, and failure modes add risk without a current scaling or team
 boundary. Scale the monolith first; extract Identity behind a versioned API and
 staff projection only when independent ownership or load justifies it.
 
+The implementation uses one pnpm workspace with a Next.js TypeScript frontend
+in `apps/web` and an Express TypeScript API in `apps/api`. The frontend uses
+Material UI with one shared theme and the Next.js App Router cache provider.
+
 ## Domain rules
 
 - `Account` owns identity and access role (`manager` or `staff`);
@@ -29,6 +33,8 @@ staff projection only when independent ownership or load justifies it.
 - At `starts_at`, shifts and assignments become immutable for everyone. Future
   cancellation or deletion uses retained cancelled/archived records, atomically
   cancels active claims, and notifies affected staff.
+- Creating or editing a shift to a start instant at or before the current
+  database time is rejected; the UI also disables already-passed IST choices.
 - As an extension beyond the brief, staff can view available, upcoming,
   completed, and cancelled shifts. Available shifts include full or conflicting
   options with clear disabled reasons; the server remains authoritative.
@@ -38,26 +44,40 @@ staff projection only when independent ownership or load justifies it.
 Use Supabase PostgreSQL, Prisma, and Upstash Redis. Staff use passwordless email
 OTP; Redis stores only an HMAC of each short-lived, one-time, attempt-limited
 OTP plus rate limits. A secure `HttpOnly` session has an absolute 24-hour
-maximum; remember-me only persists it across browser restarts.
+maximum. Remember-me requests browser persistence for up to 24 hours; unchecked
+sessions use session-only browser state.
 
-Every login creates the same Redis-backed `otpSessionId`. Demo mode lets
-allowlisted seeded accounts use a documented fixed six-digit OTP while keeping
-the same HMAC, expiry, consumption, and throttling flow. Otherwise Mailtrap
-sends a random OTP. OTP requests do not reveal whether an account exists.
+After OTP verification, the cookie contains a signed JWT with standard issuer,
+audience, issued-at, expiry, and subject claims. It carries only the account ID;
+authorization still reloads the account and staff profile from PostgreSQL on
+every protected request. Redis is not used for session storage. Logout clears
+the cookie; an issued token is otherwise valid only until its 24-hour expiry.
+The web client records remember-me intent in non-authoritative browser storage;
+full browser session restoration may also restore session storage.
+
+OTP is deliberate: `staff.csv` has no password field, so seeded passwords would
+invent source data rather than import it.
+
+Every OTP request creates a fresh Redis-backed `otpSessionId`. Demo mode lets
+every valid stored account, including later staff imports, use a documented
+fixed six-digit OTP while keeping the same HMAC, expiry, consumption, and
+throttling flow. Otherwise Mailtrap sends a random OTP. OTP requests do not
+reveal whether an account exists.
 
 ## Consistency and notifications
 
 PostgreSQL is authoritative. Claim and assignment transactions lock the
-affected shift and staff records, recheck every invariant, and use uniqueness
-and overlap safeguards. Under contention or database uncertainty, prefer
-waiting, retrying, or rejection over confirming an unsafe claim. Redis is never
-required for scheduling correctness.
+affected shift and staff records and recheck every invariant. Active
+assignments must also be protected by a PostgreSQL `EXCLUDE USING GIST`
+constraint over staff and time range; row locking is complementary, not its
+replacement. Under contention or database uncertainty, prefer waiting,
+retrying, or rejection over confirming an unsafe claim. Redis is never required
+for scheduling correctness.
 
 Durable notification rows are created with their domain mutation and remain
 visible until the recipient acknowledges them. Manager assignment,
 unassignment, cancellation, and forced claim removal notify affected staff;
-routine staff claims only refresh manager coverage. Important notices may also
-use email.
+routine staff claims only refresh manager coverage.
 
 REST handles client commands. Authenticated SSE handles live, unidirectional
 server-to-dashboard invalidations; reconnecting clients refetch PostgreSQL state.

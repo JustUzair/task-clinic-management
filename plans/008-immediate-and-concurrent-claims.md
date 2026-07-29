@@ -1,7 +1,6 @@
 # Plan 008: Immediate and concurrent claims
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented and verified with concurrent PostgreSQL integration tests.
 
 ## Claim result
 
@@ -37,9 +36,14 @@ shifts.
 
 - A database uniqueness rule prevents more than one active claim for the same
   staff member and shift.
-- The overlap strategy is enforced at the database boundary or through the
-  documented staff-row serialization; an application pre-check alone is not
-  accepted as protection.
+- The assignment table stores the effective `tstzrange` used for overlap
+  checks. A reviewed SQL migration enables `btree_gist` and adds a partial
+  `EXCLUDE USING GIST` constraint for equal staff and overlapping active ranges.
+- The exclusion constraint is mandatory. Staff-row serialization and
+  application pre-checks improve race handling and error clarity but cannot
+  replace the database backstop.
+- Shift edits update the stored active-assignment ranges and revalidate them in
+  the same transaction.
 - Transactions remain short and perform no email or network calls while locks
   are held.
 - Lock timeouts, serialization failures, and database unavailability never
@@ -51,6 +55,8 @@ shifts.
 - More simultaneous claims than remaining capacity produce exactly the allowed
   number of successful active claims.
 - The same staff member cannot concurrently claim overlapping shifts.
+- A direct insert that bypasses application locking is still rejected by the
+  exclusion constraint.
 - Double-clicking Claim cannot create duplicate active claims.
 - Manager assignment and staff claim races obey the same rules.
 - A failed or rolled-back transaction emits no SSE success event and leaves no

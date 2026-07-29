@@ -1,7 +1,6 @@
 # Plan 011: Non-overwriting imports
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented and verified for exact duplicates, conflicts, and evidence.
 
 ## Duplicate policy
 

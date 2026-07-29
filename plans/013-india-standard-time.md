@@ -1,7 +1,6 @@
 # Plan 013: India Standard Time
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented across import, storage, lifecycle, coverage, and display.
 
 ## Timezone contract
 

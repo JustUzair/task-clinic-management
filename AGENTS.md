@@ -7,9 +7,9 @@ scheduler. The evaluated product must let managers manage shifts and imports,
 let staff claim their own shifts, and keep staffing and overlap rules correct
 under concurrent use.
 
-The repository is currently in the scoping phase. Do not scaffold the
-application, select libraries, initialize Git, or implement features until the
-user gives an explicit implementation signal.
+The repository is in implementation and verification. Preserve the accepted
+scope in `DECISIONS.md` and the numbered plans; do not add features that are not
+required by those sources without an explicit user decision.
 
 ## Sources of truth
 
@@ -49,12 +49,11 @@ deployed services. Names such as Auth Service, Claim Service, and Import Service
 refer to application modules unless a separately deployable service is
 explicitly approved.
 
-The current HLD proposes a Next.js client, a Node.js API, PostgreSQL, Redis, and
-SSE. Treat that as a proposal, not a settled stack. PostgreSQL is the system of
-record. Redis may improve coordination or cross-instance fan-out, but correctness
-must not depend on an expiring cache lock. Database partitioning, Kafka, and
-other infrastructure not required by the brief must be justified by measured
-need before introduction.
+The selected stack is a Next.js client, an Express Node.js API, PostgreSQL,
+Redis-backed OTP challenges, and SSE. PostgreSQL is the system of record.
+Correctness must not depend on an expiring cache lock. Database partitioning,
+Kafka, and other infrastructure not required by the brief must be justified by
+measured need before introduction.
 
 ## Domain language
 
@@ -89,11 +88,19 @@ All mutations must enforce these rules on the server:
 - Editing a claimed shift must revalidate affected claims atomically according
   to the policy recorded in `DECISIONS.md`.
 
-Use database transactions and constraints or deliberate row locking to make
-these invariants race-safe. Application pre-checks exist to return clear errors;
-they are not the final correctness boundary. If an exclusion constraint is used
-for overlap protection, ensure the constrained table contains the time range it
-checks and that shift edits update and revalidate it in the same transaction.
+Use database transactions, constraints, and deliberate row locking to make these
+invariants race-safe. Application pre-checks exist to return clear errors; they
+are not the final correctness boundary. Ensure the constrained assignment table
+contains the time range it checks and that shift edits update and revalidate it
+in the same transaction.
+
+For this project, the overlap exclusion constraint is mandatory. The active
+assignment table must contain the effective shift range and enforce
+`EXCLUDE USING GIST` for equal staff and overlapping ranges. Enable
+`btree_gist` in a reviewed SQL migration. Staff and shift row locks remain
+required for clear errors and capacity serialization, but they do not replace
+the constraint. Shift edits must update assignment ranges and revalidate them
+atomically.
 
 Return stable, actionable domain errors. Expected business conflicts should map
 to a conflict response, not a generic internal error.
@@ -152,10 +159,19 @@ Keep local and hosted environments aligned through pinned runtime/database
 versions, migrations, and configuration validation. Do not point automated tests
 at production or shared development data.
 
-When the stack is selected, replace this paragraph with the exact supported
-commands for install, development, migrations, seed, tests, lint, type-check,
-build, and end-to-end verification. Never invent a command: inspect the package
-scripts or build files first.
+Supported root commands:
+
+- `pnpm install`: install the shared workspace dependency graph.
+- `pnpm dev`: start the API and frontend development processes.
+- `pnpm db:generate`: regenerate the Prisma client.
+- `pnpm db:migrate`: apply committed migrations.
+- `pnpm test`: run unit and HTTP tests; database integration tests are skipped.
+- `pnpm test:database`: run the complete isolated PostgreSQL verification suite.
+- `pnpm typecheck`: type-check both applications.
+- `pnpm build`: create both production builds.
+- `docker compose up --build`: migrate, seed, and start the complete stack.
+
+There is no lint script yet. Do not claim or invent one.
 
 ## Testing expectations
 
@@ -172,6 +188,26 @@ Prioritize tests around risk rather than broad shallow coverage:
 
 Tests must be deterministic, isolated, and runnable with the documented command.
 Do not weaken an invariant or remove a test merely to make a build pass.
+
+When the four-day verification budget is tight, spend it in this order:
+
+1. concurrent claim, capacity, duplicate, and overlap tests;
+2. import normalization, idempotency, and report-evidence tests;
+3. coverage dashboard and critical browser-flow tests;
+4. notification and acknowledgement tests.
+
+Notifications must eventually meet Plan 006, but they must not consume time
+needed to prove the claim and import correctness emphasized by the brief.
+
+## Time-box fallbacks
+
+- If OTP authentication and email delivery are not working end to end by the
+  end of implementation day 1, switch to the documented seeded-password mode.
+  Store hashes only and keep the OTP design and failure reason documented.
+- If auth, shift CRUD, claims, imports, and the coverage dashboard are not
+  deployed and stable by the end of implementation day 3, remove the
+  notification acknowledgement-inbox UI from the delivery scope. Preserve the
+  notification rows and SSE-driven authoritative refetch behavior.
 
 ## Change discipline
 

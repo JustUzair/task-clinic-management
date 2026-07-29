@@ -1,7 +1,6 @@
 # Plan 003: Bootstrap seeding and shift storage
 
-Status: accepted during the system-rules grilling; implementation has not
-started.
+Status: implemented and verified against the supplied fixtures.
 
 ## Bootstrap behavior
 
