@@ -1,0 +1,20 @@
+{
+  "name": "clinic-shift-scheduler",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=24.11.1"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @clinic/api --filter @clinic/web dev",
+    "build": "pnpm --recursive --if-present build",
+    "db:generate": "pnpm --filter @clinic/api db:generate",
+    "db:migrate": "pnpm --filter @clinic/api db:migrate",
+    "test": "pnpm --recursive --if-present test",
+    "test:database": "./scripts/test-database.sh",
+    "typecheck": "pnpm --recursive --if-present typecheck",
+    "start:api": "pnpm --filter @clinic/api start",
+    "start:web": "pnpm --filter @clinic/web start"
+  }
+}

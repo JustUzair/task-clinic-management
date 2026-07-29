@@ -17,6 +17,8 @@ dist/
 build/
 coverage/
 *.tsbuildinfo
+.pnpm-store/
+apps/api/src/generated/prisma/
 
 # Logs and local runtime data
 *.log
