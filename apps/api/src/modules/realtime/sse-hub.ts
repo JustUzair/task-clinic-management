@@ -31,6 +31,7 @@ export class SseHub {
     this.heartbeat = setInterval(() => {
       for (const connection of this.connections) {
         connection.response.write(": heartbeat\n\n");
+        connection.response.flush?.();
       }
     }, heartbeatIntervalMs);
     this.heartbeat.unref();
@@ -54,6 +55,7 @@ export class SseHub {
     response.flushHeaders();
     response.write(`retry: ${this.retryIntervalMs}\n`);
     response.write(": connected\n\n");
+    response.flush?.();
 
     return () => {
       this.connections.delete(connection);
@@ -84,5 +86,6 @@ export class SseHub {
         event.resourceId ? { resourceId: event.resourceId } : {},
       )}\n\n`,
     );
+    response.flush?.();
   }
 }

@@ -34,7 +34,14 @@ app.use(
   }),
 );
 app.use(helmet());
-app.use(compression());
+app.use(
+  compression({
+    filter: (request, response) =>
+      request.headers.accept?.includes("text/event-stream")
+        ? false
+        : compression.filter(request, response),
+  }),
+);
 app.use(
   cors({
     credentials: true,

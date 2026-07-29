@@ -277,6 +277,42 @@ databaseDescribe("PostgreSQL scheduling and import invariants", () => {
       staff.staffProfile!.id,
       manager,
     );
+    const assignmentNotice = await database.notification.findUnique({
+      where: {
+        eventKey: `assignment:${managerAssignment.id}:manager-assigned`,
+      },
+      select: { messageData: true },
+    });
+    expect(assignmentNotice?.messageData).toEqual({
+      assignmentId: managerAssignment.id,
+      endsAt: "2030-08-08T11:30:00.000Z",
+      shiftId: managerShift.id,
+      startsAt: "2030-08-08T03:30:00.000Z",
+    });
+    await database.notification.update({
+      where: {
+        eventKey: `assignment:${managerAssignment.id}:manager-assigned`,
+      },
+      data: {
+        messageData: {
+          assignmentId: managerAssignment.id,
+          shiftId: managerShift.id,
+        },
+      },
+    });
+    const listedNotifications = await notifications.listUnacknowledged(
+      staff.id,
+    );
+    expect(
+      listedNotifications.find(
+        item => item.type === "MANAGER_ASSIGNED",
+      )?.messageData,
+    ).toEqual({
+      assignmentId: managerAssignment.id,
+      endsAt: "2030-08-08T11:30:00.000Z",
+      shiftId: managerShift.id,
+      startsAt: "2030-08-08T03:30:00.000Z",
+    });
     await expect(
       assignments.remove(managerAssignment.id, staffActor),
     ).rejects.toMatchObject({ code: "MANAGER_ASSIGNMENT_LOCKED" });
@@ -288,6 +324,66 @@ databaseDescribe("PostgreSQL scheduling and import invariants", () => {
         where: { recipientAccountId: staff.id },
       }),
     ).toBe(2);
+  });
+
+  it("retains cancelled shift details in the staff notification", async () => {
+    const manager = await createManager();
+    const staff = await createStaff(1);
+    const shift = await database.shift.create({
+      data: {
+        endsAt: new Date("2030-08-07T11:30:00.000Z"),
+        externalShiftId: "5017",
+        requirements: {
+          doctor: 0,
+          nurse: 1,
+          receptionist: 0,
+        },
+        startsAt: new Date("2030-08-07T03:30:00.000Z"),
+      },
+    });
+    const assignment = await assignments.managerAssign(
+      shift.id,
+      staff.staffProfile!.id,
+      manager,
+    );
+
+    await shifts.cancel(shift.id, manager.id);
+
+    const notification = await database.notification.findUnique({
+      where: {
+        eventKey: `assignment:${assignment.id}:shift:CANCELLED`,
+      },
+      select: { messageData: true },
+    });
+    expect(notification?.messageData).toEqual({
+      endsAt: "2030-08-07T11:30:00.000Z",
+      externalShiftId: "5017",
+      shiftId: shift.id,
+      startsAt: "2030-08-07T03:30:00.000Z",
+      status: "CANCELLED",
+    });
+
+    await database.notification.update({
+      where: {
+        eventKey: `assignment:${assignment.id}:shift:CANCELLED`,
+      },
+      data: {
+        messageData: {
+          shiftId: shift.id,
+          status: "CANCELLED",
+        },
+      },
+    });
+    const listed = await notifications.listUnacknowledged(staff.id);
+    expect(
+      listed.find(item => item.type === "SHIFT_CANCELLED")?.messageData,
+    ).toEqual({
+      endsAt: "2030-08-07T11:30:00.000Z",
+      externalShiftId: "5017",
+      shiftId: shift.id,
+      startsAt: "2030-08-07T03:30:00.000Z",
+      status: "CANCELLED",
+    });
   });
 
   it("atomically removes and notifies claims invalidated by a shift edit", async () => {

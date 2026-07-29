@@ -250,7 +250,12 @@ export class ShiftService {
           await this.notifications.create(transaction, {
             eventKey: `assignment:${assignment.id}:shift:${targetStatus}`,
             messageData: {
+              ...(shift.externalShiftId
+                ? { externalShiftId: shift.externalShiftId }
+                : {}),
+              endsAt: shift.endsAt.toISOString(),
               shiftId,
+              startsAt: shift.startsAt.toISOString(),
               status: targetStatus,
             },
             recipientAccountId: assignment.staffProfile.accountId,

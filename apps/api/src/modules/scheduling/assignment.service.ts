@@ -290,7 +290,12 @@ export class AssignmentService {
               eventKey: `assignment:${assignment.id}:manager-assigned`,
               messageData: {
                 assignmentId: assignment.id,
+                ...(shift.externalShiftId
+                  ? { externalShiftId: shift.externalShiftId }
+                  : {}),
+                endsAt: shift.endsAt.toISOString(),
                 shiftId,
+                startsAt: shift.startsAt.toISOString(),
               },
               recipientAccountId: staffProfile.accountId,
               relatedEntity: "Assignment",

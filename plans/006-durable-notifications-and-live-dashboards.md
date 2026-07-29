@@ -13,6 +13,9 @@ documented cross-instance scaling route remains deferred.
 - Unacknowledged notices are returned on every dashboard load. The popup does
   not disappear on timeout, navigation, or reload; an explicit OK/tick request
   records acknowledgement on the server.
+- Manager-assignment, shift-cancellation, and archival notices identify the
+  shift and its IST date and time range before asking the staff member to
+  acknowledge the change.
 - Acknowledgement only sets `acknowledged_at` and dismisses the popup. The row
   remains for integrity, but a separate notification-history UI is out of scope.
 - Notification creation is idempotent per recipient and domain event.
@@ -27,8 +30,12 @@ Initial notification events are:
 ## Dashboard behavior
 
 - Staff can view upcoming claimed or assigned shifts, completed shifts, and
-  cancelled or archived shifts with clear status labels.
+  cancelled or archived shifts in a compact scrollable schedule above shift
+  discovery. Future self-claims can be unclaimed there, then both sections
+  refetch the same authoritative dashboard response.
 - Managers keep the weekly coverage dashboard from the brief.
+- Initial loads, mutations, and SSE refetches expose local progress and disable
+  affected actions until the authoritative response is applied.
 - Each open dashboard establishes one authenticated SSE connection and responds
   only to events authorized for that account.
 - SSE events contain an event ID, reconnect guidance, and no sensitive payload.

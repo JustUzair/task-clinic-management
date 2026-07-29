@@ -85,6 +85,10 @@ transactional, explainable report.
 | `POST` | `/notifications/:id/acknowledge` | Owner | Acknowledge one retained notice |
 | `GET` | `/events` | Authenticated | Open the caller's SSE stream |
 
+Manager-assignment, shift-cancellation, and archival notifications include the
+immutable shift ID, optional imported shift ID, and ISO start/end instants so
+the acknowledgement UI can identify the exact IST date and time affected.
+
 The server sends `coverage.changed`, `schedule.changed`,
 `notification.created`, and `import.status_changed` as small invalidations.
 Each event has an ID and reconnect interval; clients refetch authoritative
