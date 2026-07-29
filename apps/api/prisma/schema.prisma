@@ -1,0 +1,211 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountRole {
+  MANAGER
+  STAFF
+}
+
+enum Profession {
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+}
+
+enum ShiftStatus {
+  ACTIVE
+  CANCELLED
+  ARCHIVED
+}
+
+enum ImportType {
+  STAFF
+  SHIFT
+}
+
+enum ImportSource {
+  SEED
+  UPLOAD
+}
+
+enum ImportBatchStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum ImportRowStatus {
+  ACCEPTED
+  MERGED
+  REJECTED
+}
+
+enum AssignmentOrigin {
+  SELF_CLAIMED
+  MANAGER_ASSIGNED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  UNCLAIMED
+  UNASSIGNED
+  CANCELLED
+}
+
+enum NotificationType {
+  MANAGER_ASSIGNED
+  MANAGER_UNASSIGNED
+  SHIFT_CANCELLED
+  SHIFT_ARCHIVED
+  ASSIGNMENT_REMOVED_BY_EDIT
+  IMPORT_FAILED
+}
+
+model Account {
+  id                 String         @id @default(uuid()) @db.Uuid
+  email              String         @unique @db.VarChar(320)
+  fullName           String         @map("full_name") @db.VarChar(200)
+  role               AccountRole
+  passwordHash       String?        @map("password_hash")
+  staffProfile       StaffProfile?
+  importedBatches    ImportBatch[]  @relation("ImportBatchCreator")
+  createdShifts      Shift[]        @relation("ShiftCreator")
+  cancelledShifts    Shift[]        @relation("ShiftCanceller")
+  archivedShifts     Shift[]        @relation("ShiftArchiver")
+  createdAssignments Assignment[]   @relation("AssignmentCreator")
+  endedAssignments   Assignment[]   @relation("AssignmentEnder")
+  notifications      Notification[] @relation("NotificationRecipient")
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("accounts")
+}
+
+model Notification {
+  id                 String           @id @default(uuid()) @db.Uuid
+  recipientAccountId String           @map("recipient_account_id") @db.Uuid
+  recipientAccount   Account          @relation("NotificationRecipient", fields: [recipientAccountId], references: [id], onDelete: Restrict)
+  type               NotificationType
+  messageData        Json             @map("message_data") @db.JsonB
+  relatedEntity      String?          @map("related_entity")
+  relatedRecordId    String?          @map("related_record_id")
+  eventKey           String           @unique @map("event_key")
+  acknowledgedAt     DateTime?        @map("acknowledged_at") @db.Timestamptz(3)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([recipientAccountId, acknowledgedAt, createdAt])
+  @@map("notifications")
+}
+
+model StaffProfile {
+  id          String       @id @default(uuid()) @db.Uuid
+  accountId   String       @unique @map("account_id") @db.Uuid
+  staffId     String       @unique @map("staff_id") @db.VarChar(100)
+  profession  Profession
+  account     Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  assignments Assignment[]
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([profession])
+  @@map("staff_profiles")
+}
+
+model Shift {
+  id                   String       @id @default(uuid()) @db.Uuid
+  externalShiftId      String?      @unique @map("external_shift_id") @db.VarChar(100)
+  startsAt             DateTime     @map("starts_at") @db.Timestamptz(3)
+  endsAt               DateTime     @map("ends_at") @db.Timestamptz(3)
+  requirements         Json         @db.JsonB
+  status               ShiftStatus  @default(ACTIVE)
+  createdByAccountId   String?      @map("created_by_account_id") @db.Uuid
+  createdByAccount     Account?     @relation("ShiftCreator", fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  cancelledByAccountId String?      @map("cancelled_by_account_id") @db.Uuid
+  cancelledByAccount   Account?     @relation("ShiftCanceller", fields: [cancelledByAccountId], references: [id], onDelete: Restrict)
+  cancelledAt          DateTime?    @map("cancelled_at") @db.Timestamptz(3)
+  archivedByAccountId  String?      @map("archived_by_account_id") @db.Uuid
+  archivedByAccount    Account?     @relation("ShiftArchiver", fields: [archivedByAccountId], references: [id], onDelete: Restrict)
+  archivedAt           DateTime?    @map("archived_at") @db.Timestamptz(3)
+  assignments          Assignment[]
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([startsAt])
+  @@index([status, startsAt])
+  @@map("shifts")
+}
+
+model Assignment {
+  id                 String           @id @default(uuid()) @db.Uuid
+  shiftId            String           @map("shift_id") @db.Uuid
+  shift              Shift            @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+  staffProfileId     String           @map("staff_profile_id") @db.Uuid
+  staffProfile       StaffProfile     @relation(fields: [staffProfileId], references: [id], onDelete: Restrict)
+  origin             AssignmentOrigin
+  status             AssignmentStatus @default(ACTIVE)
+  assignmentStartsAt DateTime         @map("assignment_starts_at") @db.Timestamptz(3)
+  assignmentEndsAt   DateTime         @map("assignment_ends_at") @db.Timestamptz(3)
+  createdByAccountId String           @map("created_by_account_id") @db.Uuid
+  createdByAccount   Account          @relation("AssignmentCreator", fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  endedByAccountId   String?          @map("ended_by_account_id") @db.Uuid
+  endedByAccount     Account?         @relation("AssignmentEnder", fields: [endedByAccountId], references: [id], onDelete: Restrict)
+  endedAt            DateTime?        @map("ended_at") @db.Timestamptz(3)
+  endReason          String?          @map("end_reason")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([shiftId, status])
+  @@index([staffProfileId, status])
+  @@map("assignments")
+}
+
+model ImportBatch {
+  id                 String            @id @default(uuid()) @db.Uuid
+  type               ImportType
+  source             ImportSource
+  sourceFilename     String            @map("source_filename")
+  checksum           String            @db.Char(64)
+  seedFingerprint    String?           @unique @map("seed_fingerprint")
+  status             ImportBatchStatus @default(RUNNING)
+  totalRows          Int               @default(0) @map("total_rows")
+  acceptedRows       Int               @default(0) @map("accepted_rows")
+  mergedRows         Int               @default(0) @map("merged_rows")
+  rejectedRows       Int               @default(0) @map("rejected_rows")
+  failureReason      String?           @map("failure_reason")
+  createdByAccountId String?           @map("created_by_account_id") @db.Uuid
+  createdByAccount   Account?          @relation("ImportBatchCreator", fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  rows               ImportRow[]
+  startedAt          DateTime          @default(now()) @map("started_at") @db.Timestamptz(3)
+  completedAt        DateTime?         @map("completed_at") @db.Timestamptz(3)
+
+  @@index([source, checksum])
+  @@index([createdByAccountId, startedAt])
+  @@map("import_batches")
+}
+
+model ImportRow {
+  id              String          @id @default(uuid()) @db.Uuid
+  batchId         String          @map("batch_id") @db.Uuid
+  batch           ImportBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sourceRowNumber Int             @map("source_row_number")
+  rawData         Json            @map("raw_data") @db.JsonB
+  normalizedData  Json?           @map("normalized_data") @db.JsonB
+  status          ImportRowStatus
+  reasonCode      String?         @map("reason_code")
+  explanation     String
+  action          String
+  linkedEntity    String?         @map("linked_entity")
+  linkedRecordId  String?         @map("linked_record_id")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([batchId, sourceRowNumber])
+  @@index([batchId, status])
+  @@map("import_rows")
+}
