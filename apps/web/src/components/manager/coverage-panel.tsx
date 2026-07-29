@@ -11,10 +11,12 @@ import type {
   CoverageWeek,
   StaffProfile,
 } from "../../features/manager/types";
+import { LoadingIndicator } from "../loading-indicator";
 import { CoverageShiftCard } from "./coverage-shift-card";
 
 export function CoveragePanel({
   assignmentChoice,
+  busy,
   coverage,
   onArchive,
   onAssign,
@@ -23,10 +25,12 @@ export function CoveragePanel({
   onSelectStaff,
   onUnassign,
   onWeekChange,
+  pendingAction,
   staff,
   week,
 }: {
   assignmentChoice: Record<string, string>;
+  busy: boolean;
   coverage: CoverageWeek | null;
   onArchive: (shiftId: string) => Promise<unknown>;
   onAssign: (shiftId: string) => Promise<unknown>;
@@ -35,6 +39,7 @@ export function CoveragePanel({
   onSelectStaff: (shiftId: string, staffProfileId: string) => void;
   onUnassign: (assignmentId: string) => Promise<unknown>;
   onWeekChange: (week: string) => void;
+  pendingAction: string | null;
   staff: StaffProfile[];
   week: string;
 }) {
@@ -63,14 +68,20 @@ export function CoveragePanel({
               ? `${coverage.weekStart} to ${coverage.weekEnd}`
               : "Loading…"}
           </Typography>
+          {busy ? <LoadingIndicator label="Updating coverage…" /> : null}
         </div>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
           <ButtonGroup aria-label="Week navigation" variant="outlined">
-            <Button onClick={() => moveWeek(-7)}>Previous</Button>
-            <Button onClick={() => moveWeek(7)}>Next</Button>
+            <Button disabled={busy} onClick={() => moveWeek(-7)}>
+              Previous
+            </Button>
+            <Button disabled={busy} onClick={() => moveWeek(7)}>
+              Next
+            </Button>
           </ButtonGroup>
           <TextField
             aria-label="Jump to week containing date"
+            disabled={busy}
             onChange={event => onWeekChange(event.target.value)}
             size="small"
             type="date"
@@ -82,6 +93,7 @@ export function CoveragePanel({
       {coverage?.shifts.map(shift => (
         <CoverageShiftCard
           assignmentChoice={assignmentChoice[shift.id] ?? ""}
+          busy={busy}
           key={shift.id}
           onArchive={onArchive}
           onAssign={onAssign}
@@ -89,6 +101,7 @@ export function CoveragePanel({
           onEdit={onEdit}
           onSelectStaff={onSelectStaff}
           onUnassign={onUnassign}
+          pendingAction={pendingAction}
           shift={shift}
           staff={staff}
         />

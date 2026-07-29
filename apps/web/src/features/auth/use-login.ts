@@ -28,16 +28,19 @@ export function useLogin() {
   const [login, setLogin] = useState(initialState);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     if (!hasBrowserSession()) {
-      void clearServerSession().catch(() => undefined);
+      void clearServerSession()
+        .catch(() => undefined)
+        .finally(() => setCheckingSession(false));
       return;
     }
 
     void getCurrentAccount()
       .then(account => router.replace(routeForAccount(account)))
-      .catch(() => undefined);
+      .catch(() => setCheckingSession(false));
   }, [router]);
 
   const update = <Key extends keyof LoginState>(
@@ -87,6 +90,7 @@ export function useLogin() {
   };
 
   return {
+    checkingSession,
     error,
     loading,
     login,

@@ -2,6 +2,7 @@
 
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -11,15 +12,19 @@ import type { ShiftFormState } from "../../features/manager/types";
 import { useClinicNow } from "../../features/manager/use-clinic-now";
 
 export function ShiftForm({
+  busy,
   editing,
   form,
   onChange,
   onSave,
+  saving,
 }: {
+  busy: boolean;
   editing: boolean;
   form: ShiftFormState;
   onChange: (form: ShiftFormState) => void;
   onSave: () => Promise<unknown>;
+  saving: boolean;
 }) {
   const clinicNow = useClinicNow();
   const startHasPassed =
@@ -44,6 +49,7 @@ export function ShiftForm({
           {editing ? "Edit shift" : "Create shift"}
         </Typography>
         <TextField
+          disabled={busy}
           label="Date"
           onChange={event => onChange({ ...form, date: event.target.value })}
           required
@@ -56,6 +62,7 @@ export function ShiftForm({
         />
         <Stack direction="row" spacing={1}>
           <TextField
+            disabled={busy}
             fullWidth
             label="Start"
             onChange={event =>
@@ -73,6 +80,7 @@ export function ShiftForm({
             value={form.startTime}
           />
           <TextField
+            disabled={busy}
             fullWidth
             label="End"
             onChange={event =>
@@ -86,6 +94,7 @@ export function ShiftForm({
         </Stack>
         {(["doctor", "nurse", "receptionist"] as const).map(role => (
           <TextField
+            disabled={busy}
             key={role}
             label={`${role[0]?.toUpperCase()}${role.slice(1)} required`}
             onChange={event =>
@@ -102,12 +111,21 @@ export function ShiftForm({
           </Alert>
         ) : null}
         <Button
-          disabled={startHasPassed}
+          disabled={busy || startHasPassed}
           size="large"
           type="submit"
           variant="contained"
         >
-          {editing ? "Save changes" : "Create shift"}
+          {saving ? (
+            <>
+              <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+              Saving…
+            </>
+          ) : editing ? (
+            "Save changes"
+          ) : (
+            "Create shift"
+          )}
         </Button>
       </Stack>
     </Paper>

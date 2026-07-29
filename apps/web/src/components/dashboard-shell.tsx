@@ -3,11 +3,12 @@
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Container from "@mui/material/Container";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { apiRequest } from "../lib/api";
 import { clearBrowserSession } from "../features/auth/browser-session";
 import { NotificationInbox } from "./notification-inbox";
@@ -20,6 +21,7 @@ export function DashboardShell({
   title: string;
 }) {
   const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
@@ -44,14 +46,27 @@ export function DashboardShell({
               </Typography>
             </Box>
             <Button
+              disabled={signingOut}
               onClick={async () => {
-                await apiRequest("/api/v1/auth/logout", { method: "POST" });
-                clearBrowserSession();
-                router.replace("/");
+                setSigningOut(true);
+                try {
+                  await apiRequest("/api/v1/auth/logout", { method: "POST" });
+                  clearBrowserSession();
+                  router.replace("/");
+                } finally {
+                  setSigningOut(false);
+                }
               }}
               variant="outlined"
             >
-              Sign out
+              {signingOut ? (
+                <>
+                  <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+                  Signing out…
+                </>
+              ) : (
+                "Sign out"
+              )}
             </Button>
           </Toolbar>
         </Container>

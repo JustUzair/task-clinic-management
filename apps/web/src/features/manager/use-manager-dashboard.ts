@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../lib/api";
 import {
   archiveShift,
@@ -39,8 +39,14 @@ export function useManagerDashboard() {
   const [form, setForm] = useState<ShiftFormState>(emptyShiftForm);
   const [editingShiftId, setEditingShiftId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const initialLoad = useRef(true);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (initial = false) => {
+    initial ? setLoading(true) : setRefreshing(true);
     try {
       const data = await loadManagerData(week);
       setCoverage(data.coverage);
@@ -57,27 +63,43 @@ export function useManagerDashboard() {
           ? requestError.message
           : "Unable to load manager data",
       );
+    } finally {
+      initial ? setLoading(false) : setRefreshing(false);
     }
   }, [router, week]);
 
   useEffect(() => {
-    void load();
-    const invalidate = () => void load();
+    const isInitial = initialLoad.current;
+    initialLoad.current = false;
+    void load(isInitial);
+    const invalidate = () => {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+      refreshTimer.current = setTimeout(() => void load(), 75);
+    };
     window.addEventListener("clinic:invalidate", invalidate);
-    return () => window.removeEventListener("clinic:invalidate", invalidate);
+    return () => {
+      window.removeEventListener("clinic:invalidate", invalidate);
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
   }, [load]);
 
   const runAndReload = useCallback(
-    async (operation: () => Promise<unknown>) => {
+    async (action: string, operation: () => Promise<unknown>) => {
+      setPendingAction(action);
+      setError("");
       try {
         await operation();
         await load();
+        return true;
       } catch (requestError) {
         setError(
           requestError instanceof Error
             ? requestError.message
             : "The operation failed",
         );
+        return false;
+      } finally {
+        setPendingAction(null);
       }
     },
     [load],
@@ -85,15 +107,21 @@ export function useManagerDashboard() {
 
   return {
     archive: (shiftId: string) =>
-      runAndReload(() => archiveShift(shiftId)),
-    assign: (shiftId: string) => {
+      runAndReload(`archive:${shiftId}`, () => archiveShift(shiftId)),
+    assign: async (shiftId: string) => {
       const staffProfileId = assignmentChoice[shiftId];
-      return staffProfileId
-        ? runAndReload(() => assignStaff(shiftId, staffProfileId))
-        : Promise.resolve();
+      if (!staffProfileId) return false;
+      const assigned = await runAndReload(`assign:${shiftId}`, () =>
+        assignStaff(shiftId, staffProfileId),
+      );
+      if (assigned) {
+        setAssignmentChoice(previous => ({ ...previous, [shiftId]: "" }));
+      }
+      return assigned;
     },
     assignmentChoice,
-    cancel: (shiftId: string) => runAndReload(() => cancelShift(shiftId)),
+    cancel: (shiftId: string) =>
+      runAndReload(`cancel:${shiftId}`, () => cancelShift(shiftId)),
     coverage,
     editingShiftId,
     edit: (shift: CoverageShift) => {
@@ -110,8 +138,11 @@ export function useManagerDashboard() {
     error,
     form,
     imports,
+    loading,
+    pendingAction,
+    refreshing,
     save: () =>
-      runAndReload(async () => {
+      runAndReload("save-shift", async () => {
         await saveShift(form, editingShiftId);
         setEditingShiftId(null);
         setForm(emptyShiftForm);
@@ -125,9 +156,11 @@ export function useManagerDashboard() {
     setWeek,
     staff,
     upload: (type: "staff" | "shifts", file: File) =>
-      runAndReload(() => uploadCsv(type, file)),
+      runAndReload(`upload:${type}`, () => uploadCsv(type, file)),
     unassign: (assignmentId: string) =>
-      runAndReload(() => unassignStaff(assignmentId)),
+      runAndReload(`unassign:${assignmentId}`, () =>
+        unassignStaff(assignmentId),
+      ),
     week,
   };
 }

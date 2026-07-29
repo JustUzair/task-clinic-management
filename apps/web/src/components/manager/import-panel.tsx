@@ -3,6 +3,7 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -22,11 +23,15 @@ import type {
 import { ImportReportDetails } from "./import-report-details";
 
 export function ImportPanel({
+  busy,
   imports,
   onUpload,
+  pendingAction,
 }: {
+  busy: boolean;
   imports: ImportBatch[];
   onUpload: (type: "staff" | "shifts", file: File) => Promise<unknown>;
+  pendingAction: string | null;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
@@ -67,7 +72,13 @@ export function ImportPanel({
         }}
       >
         {(["staff", "shifts"] as const).map(type => (
-          <UploadForm key={type} onUpload={onUpload} type={type} />
+          <UploadForm
+            busy={busy}
+            key={type}
+            onUpload={onUpload}
+            pendingAction={pendingAction}
+            type={type}
+          />
         ))}
       </Box>
 
@@ -94,6 +105,7 @@ export function ImportPanel({
                   <TableCell>{batch.rejectedRows}</TableCell>
                   <TableCell>
                     <Button
+                      disabled={busy || loadingReport}
                       onClick={() => void toggleReport(batch.id)}
                       size="small"
                     >
@@ -130,10 +142,14 @@ export function ImportPanel({
 }
 
 function UploadForm({
+  busy,
   onUpload,
+  pendingAction,
   type,
 }: {
+  busy: boolean;
   onUpload: (type: "staff" | "shifts", file: File) => Promise<unknown>;
+  pendingAction: string | null;
   type: "staff" | "shifts";
 }) {
   const [file, setFile] = useState<File | null>(null);
@@ -141,6 +157,7 @@ function UploadForm({
     type === "staff"
       ? "staff_id, full_name, role, email"
       : "shift_id, date, start_time, end_time, requirements";
+  const uploading = pendingAction === `upload:${type}`;
 
   return (
     <Paper
@@ -159,7 +176,7 @@ function UploadForm({
         <Typography color="text.secondary" variant="caption">
           Expected headers: {expectedHeaders}
         </Typography>
-        <Button component="label" variant="outlined">
+        <Button component="label" disabled={busy} variant="outlined">
           {file ? file.name : "Choose CSV file"}
           <Box
             accept=".csv,text/csv"
@@ -171,8 +188,15 @@ function UploadForm({
             type="file"
           />
         </Button>
-        <Button disabled={!file} type="submit" variant="contained">
-          Upload and import
+        <Button disabled={busy || !file} type="submit" variant="contained">
+          {uploading ? (
+            <>
+              <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+              Importing…
+            </>
+          ) : (
+            "Upload and import"
+          )}
         </Button>
       </Stack>
     </Paper>

@@ -1,4 +1,5 @@
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
@@ -23,26 +24,34 @@ const coverageColors = {
 
 export function CoverageShiftCard({
   assignmentChoice,
+  busy,
   onArchive,
   onAssign,
   onCancel,
   onEdit,
   onSelectStaff,
   onUnassign,
+  pendingAction,
   shift,
   staff,
 }: {
   assignmentChoice: string;
+  busy: boolean;
   onArchive: (shiftId: string) => Promise<unknown>;
   onAssign: (shiftId: string) => Promise<unknown>;
   onCancel: (shiftId: string) => Promise<unknown>;
   onEdit: (shift: CoverageShift) => void;
   onSelectStaff: (shiftId: string, staffProfileId: string) => void;
   onUnassign: (assignmentId: string) => Promise<unknown>;
+  pendingAction: string | null;
   shift: CoverageShift;
   staff: StaffProfile[];
 }) {
   const immutable = new Date(shift.startsAt).getTime() <= Date.now();
+  const assignedStaffIds = new Set(
+    shift.assignments.map(assignment => assignment.staffProfile.id),
+  );
+  const assigning = pendingAction === `assign:${shift.id}`;
 
   return (
     <Card variant="outlined">
@@ -100,7 +109,7 @@ export function CoverageShiftCard({
                   key={assignment.id}
                   label={`${assignment.staffProfile.account.fullName} · ${assignment.staffProfile.profession.toLowerCase()}`}
                   onDelete={
-                    immutable
+                    immutable || busy
                       ? undefined
                       : () => void onUnassign(assignment.id)
                   }
@@ -112,7 +121,7 @@ export function CoverageShiftCard({
         ) : null}
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 2 }}>
-          <FormControl disabled={immutable} fullWidth size="small">
+          <FormControl disabled={immutable || busy} fullWidth size="small">
             <InputLabel id={`assign-staff-${shift.id}`}>Assign staff</InputLabel>
             <Select
               label="Assign staff"
@@ -123,28 +132,46 @@ export function CoverageShiftCard({
               value={assignmentChoice}
             >
               {staff.map(member => (
-                <MenuItem key={member.id} value={member.id}>
+                <MenuItem
+                  disabled={assignedStaffIds.has(member.id)}
+                  key={member.id}
+                  value={member.id}
+                >
                   {member.account.fullName} ·{" "}
                   {member.profession.toLowerCase()}
+                  {assignedStaffIds.has(member.id)
+                    ? " · already assigned"
+                    : ""}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
           <Button
-            disabled={immutable || !assignmentChoice}
+            disabled={immutable || busy || !assignmentChoice}
             onClick={() => void onAssign(shift.id)}
             variant="contained"
           >
-            Assign
+            {assigning ? (
+              <>
+                <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+                Updating…
+              </>
+            ) : (
+              "Assign"
+            )}
           </Button>
         </Stack>
       </CardContent>
       <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
-        <Button disabled={immutable} onClick={() => onEdit(shift)} size="small">
+        <Button
+          disabled={immutable || busy}
+          onClick={() => onEdit(shift)}
+          size="small"
+        >
           Edit
         </Button>
         <Button
-          disabled={immutable}
+          disabled={immutable || busy}
           onClick={() => void onCancel(shift.id)}
           size="small"
         >
@@ -152,7 +179,7 @@ export function CoverageShiftCard({
         </Button>
         <Button
           color="error"
-          disabled={immutable}
+          disabled={immutable || busy}
           onClick={() => void onArchive(shift.id)}
           size="small"
         >

@@ -3,12 +3,14 @@
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useLogin } from "../../features/auth/use-login";
+import { LoadingIndicator } from "../loading-indicator";
 
 export function LoginForm() {
   const auth = useLogin();
@@ -33,7 +35,11 @@ export function LoginForm() {
         Use a manager or staff email imported into the scheduler.
       </Typography>
 
-      {auth.login.otpSessionId ? (
+      {auth.checkingSession ? (
+        <Stack sx={{ mt: 3 }}>
+          <LoadingIndicator label="Checking your session…" />
+        </Stack>
+      ) : auth.login.otpSessionId ? (
         <Stack
           component="form"
           onSubmit={auth.verifyOtp}
@@ -42,6 +48,7 @@ export function LoginForm() {
         >
           <TextField
             autoComplete="one-time-code"
+            disabled={auth.loading}
             fullWidth
             slotProps={{
               htmlInput: {
@@ -60,6 +67,7 @@ export function LoginForm() {
             control={
               <Checkbox
                 checked={auth.login.rememberMe}
+                disabled={auth.loading}
                 onChange={event =>
                   auth.update("rememberMe", event.target.checked)
                 }
@@ -74,9 +82,16 @@ export function LoginForm() {
             type="submit"
             variant="contained"
           >
-            {auth.loading ? "Signing in…" : "Verify and sign in"}
+            {auth.loading ? (
+              <>
+                <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+                Signing in…
+              </>
+            ) : (
+              "Verify and sign in"
+            )}
           </Button>
-          <Button onClick={auth.reset} type="button">
+          <Button disabled={auth.loading} onClick={auth.reset} type="button">
             Use another email
           </Button>
         </Stack>
@@ -89,6 +104,7 @@ export function LoginForm() {
         >
           <TextField
             autoComplete="email"
+            disabled={auth.loading}
             fullWidth
             label="Email"
             onChange={event => auth.update("email", event.target.value)}
@@ -103,7 +119,14 @@ export function LoginForm() {
             type="submit"
             variant="contained"
           >
-            {auth.loading ? "Requesting…" : "Generate OTP"}
+            {auth.loading ? (
+              <>
+                <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+                Requesting…
+              </>
+            ) : (
+              "Generate OTP"
+            )}
           </Button>
         </Stack>
       )}
