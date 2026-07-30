@@ -1,0 +1,6 @@
+staff_id,full_name,role,email
+9001,Alice Johnson,Doctor,alice.johnson@testclinic.test
+9002,Brian Lee,Nurse,brian.lee@testclinic.test
+9003,Carla Gomez,Receptionist,carla.gomez@testclinic.test
+9004,Derek Wu,RN,derek.wu@testclinic.test
+9005,Elena Popov,MD,elena.popov@testclinic.test

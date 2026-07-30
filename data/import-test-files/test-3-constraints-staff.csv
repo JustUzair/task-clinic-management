@@ -1,0 +1,14 @@
+staff_id,full_name,role,email
+9200,Frank Castillo,Doctor,frank.castillo@testclinic.test
+9200,Frank Castillo,Doctor,frank.castillo@testclinic.test
+9200,Frank Castillo,Nurse,frank.other@testclinic.test
+9202,Frank Castillo,Doctor,frank.castillo@testclinic.test
+,Grace Hopper,Nurse,grace.hopper@testclinic.test
+9203,,Nurse,noname@testclinic.test
+9204,Henry Ford,Janitor,henry.ford@testclinic.test
+9205,Ivy Chen,Nurse,not-an-email
+9206,Jack Ryan,Nurse,
+9207,  Karan   Patel  ,RN,karan.patel@testclinic.test
+9208,Lena Ortiz,  registered nurse ,lena.ortiz@testclinic.test
+9209,Miguel Santos,recep.,MIGUEL.SANTOS@TESTCLINIC.TEST
+9210,Nora Diaz,Nurse,nora.diaz@testclinic.test,extra

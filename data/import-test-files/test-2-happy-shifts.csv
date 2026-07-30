@@ -1,0 +1,6 @@
+shift_id,date,start_time,end_time,requirements
+9101,2026-09-01,09:00,17:00,nurses=2;doctors=1;receptionists=1
+9102,2026-09-02,08:00,16:00,nurses=1;doctors=1
+9103,2026-09-03,22:00,06:00,nurses=2;doctors=0;receptionists=1
+9104,2026-01-15,09:00,17:00,nurses=1;doctors=1;receptionists=0
+9105,2026-09-05,07:30,15:30,nurses=3
