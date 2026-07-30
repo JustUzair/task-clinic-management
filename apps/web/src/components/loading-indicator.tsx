@@ -20,7 +20,7 @@ export function LoadingIndicator({
       spacing={1}
       sx={{ alignItems: "center" }}
     >
-      <CircularProgress size={size} />
+      <CircularProgress size={size} thickness={5} />
       <Typography color="text.secondary" variant="body2">
         {label}
       </Typography>
@@ -29,7 +29,14 @@ export function LoadingIndicator({
 
   return page ? (
     <Paper
-      sx={{ display: "flex", justifyContent: "center", p: 4 }}
+      sx={{
+        backgroundColor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+        display: "flex",
+        justifyContent: "center",
+        p: 4,
+      }}
       variant="outlined"
     >
       {content}
