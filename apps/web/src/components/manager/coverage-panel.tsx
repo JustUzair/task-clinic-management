@@ -1,11 +1,14 @@
 "use client";
 
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { CalendarDays } from "lucide-react";
 import type {
   CoverageShift,
   CoverageWeek,
@@ -51,44 +54,71 @@ export function CoveragePanel({
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{
-          alignItems: { sm: "flex-end" },
-          justifyContent: "space-between",
-        }}
+      <Paper
+        sx={{ border: "1px solid", borderColor: "divider", p: 2.5 }}
+        variant="outlined"
       >
-        <div>
-          <Typography component="h2" variant="h6">
-            Weekly coverage
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            {coverage
-              ? `${coverage.weekStart} to ${coverage.weekEnd}`
-              : "Loading…"}
-          </Typography>
-          {busy ? <LoadingIndicator label="Updating coverage…" /> : null}
-        </div>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-          <ButtonGroup aria-label="Week navigation" variant="outlined">
-            <Button disabled={busy} onClick={() => moveWeek(-7)}>
-              Previous
-            </Button>
-            <Button disabled={busy} onClick={() => moveWeek(7)}>
-              Next
-            </Button>
-          </ButtonGroup>
-          <TextField
-            aria-label="Jump to week containing date"
-            disabled={busy}
-            onChange={event => onWeekChange(event.target.value)}
-            size="small"
-            type="date"
-            value={week}
-          />
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            alignItems: { sm: "flex-end" },
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+              <Box
+                sx={{
+                  alignItems: "center",
+                  backgroundColor: "primary.light",
+                  borderRadius: 3,
+                  color: "primary.dark",
+                  display: "flex",
+                  height: 42,
+                  justifyContent: "center",
+                  width: 42,
+                }}
+              >
+                <CalendarDays size={18} />
+              </Box>
+              <div>
+                <Typography component="h2" variant="h6">
+                  Weekly coverage
+                </Typography>
+                <Typography color="text.secondary" variant="body2">
+                  {coverage
+                    ? `${coverage.weekStart} to ${coverage.weekEnd}`
+                    : "Loading…"}
+                </Typography>
+              </div>
+            </Stack>
+            {busy ? (
+              <Box sx={{ mt: 1.5 }}>
+                <LoadingIndicator label="Updating coverage…" />
+              </Box>
+            ) : null}
+          </Box>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <ButtonGroup aria-label="Week navigation" variant="outlined">
+              <Button disabled={busy} onClick={() => moveWeek(-7)}>
+                Previous week
+              </Button>
+              <Button disabled={busy} onClick={() => moveWeek(7)}>
+                Next week
+              </Button>
+            </ButtonGroup>
+            <TextField
+              aria-label="Jump to week containing date"
+              disabled={busy}
+              onChange={event => onWeekChange(event.target.value)}
+              size="small"
+              type="date"
+              value={week}
+            />
+          </Stack>
         </Stack>
-      </Stack>
+      </Paper>
 
       {coverage?.shifts.map(shift => (
         <CoverageShiftCard

@@ -38,6 +38,7 @@ export function useManagerDashboard() {
   >({});
   const [form, setForm] = useState<ShiftFormState>(emptyShiftForm);
   const [editingShiftId, setEditingShiftId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -126,6 +127,7 @@ export function useManagerDashboard() {
     editingShiftId,
     edit: (shift: CoverageShift) => {
       setEditingShiftId(shift.id);
+      setFormOpen(true);
       setForm({
         date: shift.localTime.date,
         doctor: shift.roles.doctor.required,
@@ -137,16 +139,33 @@ export function useManagerDashboard() {
     },
     error,
     form,
+    formOpen,
     imports,
     loading,
     pendingAction,
     refreshing,
-    save: () =>
-      runAndReload("save-shift", async () => {
+    save: async () => {
+      const saved = await runAndReload("save-shift", async () => {
         await saveShift(form, editingShiftId);
+      });
+      if (saved) {
         setEditingShiftId(null);
         setForm(emptyShiftForm);
-      }),
+        setFormOpen(false);
+      }
+      return saved;
+    },
+    startCreate: () => {
+      setEditingShiftId(null);
+      setForm(emptyShiftForm);
+      setFormOpen(true);
+    },
+    closeForm: () => {
+      if (pendingAction === "save-shift") return;
+      setEditingShiftId(null);
+      setForm(emptyShiftForm);
+      setFormOpen(false);
+    },
     setAssignment: (shiftId: string, staffProfileId: string) =>
       setAssignmentChoice(previous => ({
         ...previous,

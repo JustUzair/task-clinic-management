@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
+import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -14,12 +15,14 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import { FileSpreadsheet, Upload } from "lucide-react";
 import { Fragment, type ChangeEvent, useState } from "react";
 import { loadImportReport } from "../../features/manager/manager-api";
 import type {
   ImportBatch,
   ImportReport,
 } from "../../features/manager/types";
+import { importTypeLabel } from "../../lib/display";
 import { ImportReportDetails } from "./import-report-details";
 
 export function ImportPanel({
@@ -61,9 +64,33 @@ export function ImportPanel({
 
   return (
     <Stack component="section" spacing={2} sx={{ mt: 4 }}>
-      <Typography component="h2" variant="h6">
-        CSV imports
-      </Typography>
+      <Paper sx={{ border: "1px solid", borderColor: "divider", p: 2.5 }} variant="outlined">
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Box
+            sx={{
+              alignItems: "center",
+              backgroundColor: "primary.light",
+              borderRadius: 3,
+              color: "primary.dark",
+              display: "flex",
+              height: 42,
+              justifyContent: "center",
+              width: 42,
+            }}
+          >
+            <FileSpreadsheet size={18} />
+          </Box>
+          <Box>
+            <Typography component="h2" variant="h6">
+              CSV imports
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              Upload staff and shift files with the same validation pipeline
+              used during seeding.
+            </Typography>
+          </Box>
+        </Stack>
+      </Paper>
       <Box
         sx={{
           display: "grid",
@@ -82,7 +109,11 @@ export function ImportPanel({
         ))}
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
+      <TableContainer
+        component={Paper}
+        sx={{ border: "1px solid", borderColor: "divider" }}
+        variant="outlined"
+      >
         <Table aria-label="Import batches" size="small">
           <TableHead>
             <TableRow>
@@ -98,8 +129,8 @@ export function ImportPanel({
             {imports.map(batch => (
               <Fragment key={batch.id}>
                 <TableRow>
-                  <TableCell>{batch.sourceFilename}</TableCell>
-                  <TableCell>{batch.type.toLowerCase()}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{batch.sourceFilename}</TableCell>
+                  <TableCell>{importTypeLabel(batch.type)}</TableCell>
                   <TableCell>{batch.acceptedRows}</TableCell>
                   <TableCell>{batch.mergedRows}</TableCell>
                   <TableCell>{batch.rejectedRows}</TableCell>
@@ -166,16 +197,33 @@ function UploadForm({
         event.preventDefault();
         if (file) void onUpload(type, file).then(() => setFile(null));
       }}
-      sx={{ p: 2 }}
+      sx={{ border: "1px solid", borderColor: "divider", p: 2.25 }}
       variant="outlined"
     >
       <Stack spacing={1.5}>
-        <Typography sx={{ fontWeight: 600, textTransform: "capitalize" }}>
-          Import {type} CSV
-        </Typography>
+        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+          <Box
+            sx={{
+              alignItems: "center",
+              backgroundColor: "rgba(20, 125, 116, 0.08)",
+              borderRadius: 3,
+              color: "primary.main",
+              display: "flex",
+              height: 38,
+              justifyContent: "center",
+              width: 38,
+            }}
+          >
+            <Upload size={16} />
+          </Box>
+          <Typography sx={{ fontWeight: 700 }}>
+            Import {importTypeLabel(type)} CSV
+          </Typography>
+        </Stack>
         <Typography color="text.secondary" variant="caption">
           Expected headers: {expectedHeaders}
         </Typography>
+        <Divider />
         <Button component="label" disabled={busy} variant="outlined">
           {file ? file.name : "Choose CSV file"}
           <Box
@@ -195,7 +243,7 @@ function UploadForm({
               Importing…
             </>
           ) : (
-            "Upload and import"
+            "Upload and process"
           )}
         </Button>
       </Stack>

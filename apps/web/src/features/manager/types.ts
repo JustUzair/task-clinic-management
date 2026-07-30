@@ -18,6 +18,7 @@ export interface CoverageShift {
     startTime: string;
   };
   coverageStatus: "empty" | "partial" | "full";
+  endsAt: string;
   roles: Record<"doctor" | "nurse" | "receptionist", RoleCoverage>;
   startsAt: string;
 }
