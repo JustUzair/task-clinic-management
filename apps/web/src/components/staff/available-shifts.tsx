@@ -5,6 +5,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
+import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { CalendarPlus2, CircleAlert } from "lucide-react";
@@ -21,11 +22,19 @@ const disabledLabels: Record<string, string> = {
 export function AvailableShifts({
   busy,
   onClaim,
+  onPageChange,
+  pagination,
   pendingId,
   shifts,
 }: {
   busy: boolean;
   onClaim: (shiftId: string) => Promise<void>;
+  onPageChange: (page: number) => void;
+  pagination: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
   pendingId: string | null;
   shifts: AvailableShift[];
 }) {
@@ -145,6 +154,24 @@ export function AvailableShifts({
           ))}
         </Box>
       )}
+      {pagination.totalPages > 1 ? (
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          sx={{ alignItems: "center", justifyContent: "space-between", mt: 2 }}
+        >
+          <Typography color="text.secondary" variant="body2">
+            {pagination.total} matching shifts
+          </Typography>
+          <Pagination
+            color="primary"
+            count={pagination.totalPages}
+            disabled={busy || pendingId !== null}
+            onChange={(_event, page) => onPageChange(page)}
+            page={pagination.page}
+          />
+        </Stack>
+      ) : null}
     </Box>
   );
 }

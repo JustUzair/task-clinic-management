@@ -1,4 +1,4 @@
-import type { PrismaClient } from "../../generated/prisma/client.js";
+import type { Prisma, PrismaClient } from "../../generated/prisma/client.js";
 import { AssignmentStatus, ShiftStatus } from "../../generated/prisma/enums.js";
 import type { AuthenticatedAccount } from "../identity/identity.types.js";
 import { ForbiddenError } from "../../lib/app-error.js";
@@ -8,13 +8,22 @@ import {
 } from "./requirements.js";
 import { withPresentedTime } from "./time-presentation.js";
 
+interface StaffDashboardOptions {
+  availablePage: number;
+  availablePageSize: number;
+  historyLimit: number;
+}
+
 export class DiscoveryService {
   constructor(
     private readonly database: PrismaClient,
     private readonly timezone: string,
   ) {}
 
-  async getStaffDashboard(account: AuthenticatedAccount) {
+  async getStaffDashboard(
+    account: AuthenticatedAccount,
+    options: StaffDashboardOptions,
+  ) {
     if (!account.staffProfile) {
       throw new ForbiddenError(
         "STAFF_PROFILE_REQUIRED",
@@ -27,16 +36,22 @@ export class DiscoveryService {
     const requirementKey = getProfessionRequirementKey(
       staffProfile.profession,
     );
-    const [candidateShifts, personalAssignments] = await Promise.all([
+    const candidateWhere = {
+      startsAt: { gt: now },
+      status: ShiftStatus.ACTIVE,
+      requirements: {
+        path: [requirementKey],
+        gt: 0,
+      },
+    } satisfies Prisma.ShiftWhereInput;
+    const [
+      candidateShifts,
+      availableTotal,
+      currentAssignments,
+      historicalAssignments,
+    ] = await Promise.all([
       this.database.shift.findMany({
-        where: {
-          startsAt: { gt: now },
-          status: ShiftStatus.ACTIVE,
-          requirements: {
-            path: [requirementKey],
-            gt: 0,
-          },
-        },
+        where: candidateWhere,
         include: {
           assignments: {
             where: { status: AssignmentStatus.ACTIVE },
@@ -48,16 +63,47 @@ export class DiscoveryService {
           },
         },
         orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+        skip: (options.availablePage - 1) * options.availablePageSize,
+        take: options.availablePageSize,
       }),
+      this.database.shift.count({ where: candidateWhere }),
       this.database.assignment.findMany({
-        where: { staffProfileId: staffProfile.id },
+        where: {
+          staffProfileId: staffProfile.id,
+          status: AssignmentStatus.ACTIVE,
+          shift: {
+            endsAt: { gt: now },
+            status: ShiftStatus.ACTIVE,
+          },
+        },
         include: { shift: true },
         orderBy: [{ assignmentStartsAt: "asc" }, { id: "asc" }],
       }),
+      this.database.assignment.findMany({
+        where: {
+          staffProfileId: staffProfile.id,
+          OR: [
+            { status: { not: AssignmentStatus.ACTIVE } },
+            { shift: { status: { not: ShiftStatus.ACTIVE } } },
+            {
+              status: AssignmentStatus.ACTIVE,
+              shift: {
+                endsAt: { lte: now },
+                status: ShiftStatus.ACTIVE,
+              },
+            },
+          ],
+        },
+        include: { shift: true },
+        orderBy: [{ assignmentStartsAt: "desc" }, { id: "desc" }],
+        take: options.historyLimit,
+      }),
     ]);
-    const activePersonalAssignments = personalAssignments.filter(
-      assignment => assignment.status === AssignmentStatus.ACTIVE,
-    );
+    const personalAssignments = [
+      ...currentAssignments,
+      ...historicalAssignments,
+    ];
+    const activePersonalAssignments = currentAssignments;
 
     const available = candidateShifts.map(shift => {
       const required = getProfessionRequirement(
@@ -107,6 +153,15 @@ export class DiscoveryService {
 
     return {
       available,
+      availablePagination: {
+        page: options.availablePage,
+        pageSize: options.availablePageSize,
+        total: availableTotal,
+        totalPages: Math.max(
+          Math.ceil(availableTotal / options.availablePageSize),
+          1,
+        ),
+      },
       cancelled: personalAssignments.filter(
         assignment =>
           assignment.status === AssignmentStatus.CANCELLED ||

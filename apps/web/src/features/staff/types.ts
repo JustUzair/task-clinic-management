@@ -37,6 +37,12 @@ export interface PersonalAssignment {
 
 export interface StaffDashboard {
   available: AvailableShift[];
+  availablePagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
   cancelled: PersonalAssignment[];
   completed: PersonalAssignment[];
   ongoing: PersonalAssignment[];

@@ -28,7 +28,7 @@ export default function StaffPage() {
           icon: BriefcaseMedical,
           label: "Open shifts",
           tone: "#23414d",
-          value: dashboard.available.length,
+          value: dashboard.availablePagination.total,
         },
         {
           icon: CheckCircle2,
@@ -119,6 +119,14 @@ export default function StaffPage() {
             <AvailableShifts
               busy={staff.refreshing}
               onClaim={staff.claim}
+              onPageChange={staff.setAvailablePage}
+              pagination={
+                dashboard?.availablePagination ?? {
+                  page: 1,
+                  total: 0,
+                  totalPages: 1,
+                }
+              }
               pendingId={staff.pendingId}
               shifts={dashboard?.available ?? []}
             />

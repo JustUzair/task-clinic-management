@@ -1,9 +1,16 @@
 import { apiRequest } from "../../lib/api";
 import type { StaffDashboard } from "./types";
 
-export async function loadStaffDashboard(): Promise<StaffDashboard> {
+export async function loadStaffDashboard(
+  availablePage = 1,
+): Promise<StaffDashboard> {
+  const query = new URLSearchParams({
+    availablePage: String(availablePage),
+    availablePageSize: "20",
+    historyLimit: "50",
+  });
   const response = await apiRequest<{ data: StaffDashboard }>(
-    "/api/v1/staff/shifts",
+    `/api/v1/staff/shifts?${query.toString()}`,
   );
   return response.data;
 }

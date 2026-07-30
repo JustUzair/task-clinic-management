@@ -48,7 +48,7 @@ validated before the durable account is loaded.
 | `POST` | `/shifts/:id/claims` | Staff | Claim the shift for the current staff member |
 | `POST` | `/shifts/:id/assignments` | Manager | Assign a selected staff profile |
 | `DELETE` | `/assignments/:id` | Authenticated | Authorized unclaim or unassignment |
-| `GET` | `/staff/shifts` | Staff | Available and personal schedule sections |
+| `GET` | `/staff/shifts` | Staff | Paginated available shifts and bounded personal schedule sections |
 | `GET` | `/coverage?week=YYYY-MM-DD` | Manager | Derived Monday-Sunday coverage |
 | `GET` | `/staff-directory` | Manager | Staff choices for direct assignment |
 
@@ -61,6 +61,12 @@ Staff may remove only their own future self-claim. Managers may remove either
 assignment origin before the shift starts. All removals retain audit rows.
 Creating or editing a shift with a start instant at or before database time
 returns `SHIFT_START_NOT_FUTURE`.
+
+`GET /staff/shifts` accepts `availablePage` (default `1`),
+`availablePageSize` (default `20`, maximum `50`), and `historyLimit` (default
+`50`, maximum `100`). Its response includes `availablePagination`; ongoing and
+future active assignments are always returned, while completed and removed
+history is bounded by `historyLimit`.
 
 ## Import routes
 
@@ -93,4 +99,7 @@ The server sends `coverage.changed`, `schedule.changed`,
 `notification.created`, and `import.status_changed` as small invalidations.
 Each event has an ID and reconnect interval; clients refetch authoritative
 PostgreSQL state. The current in-process fan-out assumes one API instance.
-Cross-instance fan-out is deferred until deployment scale requires it.
+Cross-instance fan-out is deferred until deployment scale requires it. The
+Vercel web deployment uses cached polling instead because function instances do
+not share the in-memory hub and long-running streams have a function-duration
+limit.
