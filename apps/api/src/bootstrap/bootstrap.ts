@@ -70,7 +70,7 @@ export async function bootstrapApplication(): Promise<void> {
     readFixture("shifts.csv"),
   ]);
   const guardPool = new Pool({
-    connectionString: env.DATABASE_URL,
+    connectionString: env.DIRECT_URL ?? env.DATABASE_URL,
     connectionTimeoutMillis: 10_000,
     max: 1,
   });

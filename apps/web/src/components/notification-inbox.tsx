@@ -6,40 +6,58 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Snackbar from "@mui/material/Snackbar";
 import { useCallback, useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 import {
   notificationMessage,
   type NotificationItem,
 } from "../features/notifications/notification-message";
-import { apiRequest, apiUrl } from "../lib/api";
+import {
+  apiRequest,
+  apiUrl,
+  realtimePollingIntervalMs,
+  shouldUseSse,
+} from "../lib/api";
+
+interface NotificationResponse {
+  data: { notifications: NotificationItem[] };
+}
 
 export function NotificationInbox() {
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [liveRefreshing, setLiveRefreshing] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
-  const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    data,
+    error: requestError,
+    mutate,
+  } = useSWR<NotificationResponse>(
+    "notifications",
+    () => apiRequest<NotificationResponse>("/api/v1/notifications"),
+    {
+      dedupingInterval: 2_000,
+      keepPreviousData: true,
+      refreshInterval: realtimePollingIntervalMs,
+      refreshWhenHidden: false,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+    },
+  );
+  const items = data?.data.notifications ?? [];
 
-  const load = useCallback(async (showProgress = false) => {
-    if (showProgress) setRefreshing(true);
+  const refreshFromEvent = useCallback(async () => {
+    setLiveRefreshing(true);
     try {
-      const response = await apiRequest<{
-        data: { notifications: NotificationItem[] };
-      }>("/api/v1/notifications");
-      setItems(response.data.notifications);
-      setError("");
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to load notifications",
-      );
+      await mutate();
+      setActionError("");
     } finally {
-      if (showProgress) setRefreshing(false);
+      setLiveRefreshing(false);
     }
-  }, []);
+  }, [mutate]);
 
   useEffect(() => {
-    void load();
+    if (!shouldUseSse()) return;
+
     const stream = new EventSource(`${apiUrl}/api/v1/events`, {
       withCredentials: true,
     });
@@ -58,7 +76,10 @@ export function NotificationInbox() {
         event.type === "schedule.changed"
       ) {
         if (refreshTimer.current) clearTimeout(refreshTimer.current);
-        refreshTimer.current = setTimeout(() => void load(true), 75);
+        refreshTimer.current = setTimeout(
+          () => void refreshFromEvent(),
+          75,
+        );
       }
     };
 
@@ -69,10 +90,17 @@ export function NotificationInbox() {
       stream.close();
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
     };
-  }, [load]);
+  }, [refreshFromEvent]);
 
   const current = items[0];
-  const showStatus = Boolean(current) || refreshing || Boolean(error);
+  const error =
+    actionError ||
+    (requestError instanceof Error
+      ? requestError.message
+      : requestError
+        ? "Unable to load notifications"
+        : "");
+  const showStatus = Boolean(current) || liveRefreshing || Boolean(error);
 
   return (
     <Snackbar
@@ -84,20 +112,31 @@ export function NotificationInbox() {
           current ? (
             <Button
               color="inherit"
-              disabled={acknowledging || refreshing}
+              disabled={acknowledging || liveRefreshing}
               onClick={async () => {
                 setAcknowledging(true);
-                setError("");
+                setActionError("");
                 try {
                   await apiRequest(
                     `/api/v1/notifications/${current.id}/acknowledge`,
                     { method: "POST" },
                   );
-                  setItems(previous => previous.slice(1));
-                } catch (requestError) {
-                  setError(
-                    requestError instanceof Error
-                      ? requestError.message
+                  await mutate(
+                    previous =>
+                      previous
+                        ? {
+                            data: {
+                              notifications:
+                                previous.data.notifications.slice(1),
+                            },
+                          }
+                        : previous,
+                    { revalidate: false },
+                  );
+                } catch (acknowledgeError) {
+                  setActionError(
+                    acknowledgeError instanceof Error
+                      ? acknowledgeError.message
                       : "Unable to acknowledge the notification",
                   );
                 } finally {
@@ -124,7 +163,7 @@ export function NotificationInbox() {
         <AlertTitle>{error ? "Notification error" : "Schedule update"}</AlertTitle>
         {error
           ? error
-          : refreshing
+          : liveRefreshing
             ? "Checking for schedule updates…"
             : current
               ? notificationMessage(current)

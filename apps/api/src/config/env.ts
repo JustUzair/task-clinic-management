@@ -32,7 +32,19 @@ const envSchema = z.object({
     .enum(["lax", "strict", "none"])
     .default("lax"),
   COOKIE_SECURE: booleanFromString.default(false),
+  DATABASE_CONNECTION_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5_000),
+  DATABASE_IDLE_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(10_000),
+  DATABASE_POOL_MAX: z.coerce.number().int().positive().max(20).default(2),
   DATABASE_URL: z.string().min(1),
+  DIRECT_URL: z.string().min(1).optional(),
   DEMO_AUTH_ENABLED: booleanFromString.default(false),
   DEMO_OTP_CODE: z.string().regex(/^\d{6}$/).default("123456"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),

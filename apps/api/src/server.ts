@@ -4,7 +4,7 @@ import { prisma } from "./config/database.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 
-async function main(): Promise<void> {
+async function startStandaloneServer(): Promise<void> {
   await bootstrapApplication();
 
   const server = app.listen(env.API_PORT, "0.0.0.0", () => {
@@ -46,8 +46,12 @@ async function main(): Promise<void> {
   });
 }
 
-main().catch(async error => {
-  logger.fatal({ error }, "Clinic API startup failed");
-  await prisma.$disconnect();
-  process.exit(1);
-});
+if (process.env.VERCEL !== "1") {
+  startStandaloneServer().catch(async error => {
+    logger.fatal({ error }, "Clinic API startup failed");
+    await prisma.$disconnect();
+    process.exit(1);
+  });
+}
+
+export default app;

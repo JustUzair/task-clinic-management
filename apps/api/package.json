@@ -17,6 +17,7 @@
     "@prisma/adapter-pg": "7.6.0",
     "@prisma/client": "7.6.0",
     "@upstash/redis": "1.38.0",
+    "@vercel/functions": "^3.7.6",
     "bcryptjs": "3.0.3",
     "compression": "1.8.1",
     "cookie-parser": "1.4.7",

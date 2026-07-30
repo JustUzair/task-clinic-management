@@ -1,6 +1,29 @@
 export const apiUrl =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+const configuredRealtimeTransport =
+  process.env.NEXT_PUBLIC_REALTIME_TRANSPORT ?? "auto";
+const configuredPollingInterval = Number(
+  process.env.NEXT_PUBLIC_REALTIME_POLL_INTERVAL_MS ?? "10000",
+);
+
+export const realtimePollingIntervalMs = Number.isFinite(
+  configuredPollingInterval,
+)
+  ? Math.max(configuredPollingInterval, 5_000)
+  : 10_000;
+
+export function shouldUseSse(): boolean {
+  if (configuredRealtimeTransport === "sse") return true;
+  if (configuredRealtimeTransport === "polling") return false;
+
+  try {
+    return !new URL(apiUrl).hostname.endsWith(".vercel.app");
+  } catch {
+    return true;
+  }
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
