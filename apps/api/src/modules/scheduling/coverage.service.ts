@@ -141,6 +141,10 @@ export class CoverageService {
       })),
       coverageStatus:
         claimedTotal === 0 ? "empty" : fullyStaffed ? "full" : "partial",
+      externalShiftId:
+        typeof shift.externalShiftId === "string"
+          ? shift.externalShiftId
+          : null,
       roles,
     };
   }

@@ -92,7 +92,13 @@ export function PersonalSchedule({
                     <Typography sx={{ fontWeight: 600 }} variant="body2">
                       <ShiftTime time={assignment.shift.localTime} />
                     </Typography>
+                    {assignment.shift.externalShiftId ? (
+                      <Typography color="text.secondary" variant="caption">
+                        # {assignment.shift.externalShiftId}
+                      </Typography>
+                    ) : null}
                     <Typography color="text.secondary" variant="caption">
+                      {" | "}
                       {assignment.origin === "MANAGER_ASSIGNED"
                         ? "Assigned by manager"
                         : "Self-claimed"}

@@ -14,6 +14,7 @@ export interface LocalShiftTime {
 
 export interface PresentedShift {
   endsAt: string;
+  externalShiftId: string | null;
   id: string;
   localTime: LocalShiftTime;
   startsAt: string;

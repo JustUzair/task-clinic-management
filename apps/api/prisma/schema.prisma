@@ -120,7 +120,7 @@ model StaffProfile {
 
 model Shift {
   id                   String       @id @default(uuid()) @db.Uuid
-  externalShiftId      String?      @unique @map("external_shift_id") @db.VarChar(100)
+  externalShiftId      String       @unique @default(dbgenerated("(nextval('shifts_external_shift_id_seq'::regclass))::text")) @map("external_shift_id") @db.VarChar(100)
   startsAt             DateTime     @map("starts_at") @db.Timestamptz(3)
   endsAt               DateTime     @map("ends_at") @db.Timestamptz(3)
   requirements         Json         @db.JsonB

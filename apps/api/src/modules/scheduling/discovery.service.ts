@@ -138,17 +138,23 @@ export class DiscoveryService {
         disabledReason,
         remaining: Math.max(required - claimed, 0),
         required,
-        shift: withPresentedTime(shift, this.timezone),
+        shift: {
+          ...withPresentedTime(shift, this.timezone),
+          externalShiftId: shift.externalShiftId,
+        },
       };
     });
 
     const presentAssignment = <T extends {
-      shift: { endsAt: Date; startsAt: Date };
+      shift: { endsAt: Date; externalShiftId: string | null; startsAt: Date };
     }>(
       assignment: T,
     ) => ({
       ...assignment,
-      shift: withPresentedTime(assignment.shift, this.timezone),
+      shift: {
+        ...withPresentedTime(assignment.shift, this.timezone),
+        externalShiftId: assignment.shift.externalShiftId,
+      },
     });
 
     return {

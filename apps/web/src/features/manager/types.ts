@@ -10,6 +10,7 @@ export interface CoverageShift {
     origin: "MANAGER_ASSIGNED" | "SELF_CLAIMED";
     staffProfile: StaffProfile;
   }>;
+  externalShiftId: string | null;
   id: string;
   localTime: {
     date: string;

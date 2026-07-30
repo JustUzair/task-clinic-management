@@ -84,7 +84,14 @@ export function CoverageShiftCard({
                 {shift.localTime.endTime}
                 {shift.localTime.overnight ? " (+1 day)" : ""}
               </Typography>
+              {shift.externalShiftId ? (
+                <Typography color="text.secondary" variant="caption">
+                  {"("}# {shift.externalShiftId}
+                  {")"}
+                </Typography>
+              ) : null}
             </Stack>
+
             <Stack
               direction="row"
               spacing={1}

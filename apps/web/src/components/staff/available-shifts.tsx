@@ -40,7 +40,10 @@ export function AvailableShifts({
 }) {
   return (
     <Box component="section">
-      <Card sx={{ border: "1px solid", borderColor: "divider" }} variant="outlined">
+      <Card
+        sx={{ border: "1px solid", borderColor: "divider" }}
+        variant="outlined"
+      >
         <CardContent sx={{ p: 2.5 }}>
           <Box
             sx={{
@@ -102,15 +105,28 @@ export function AvailableShifts({
                 <Typography sx={{ fontWeight: 700 }}>
                   <ShiftTime time={item.shift.localTime} />
                 </Typography>
+                {item.shift.externalShiftId ? (
+                  <Typography color="text.secondary" variant="caption">
+                    # {item.shift.externalShiftId}
+                  </Typography>
+                ) : null}
                 <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
                   <Chip
                     color={item.remaining > 0 ? "success" : "default"}
                     label={`${item.remaining} open`}
                     size="small"
                   />
-                  <Chip label={`${item.required} required`} size="small" variant="outlined" />
+                  <Chip
+                    label={`${item.required} required`}
+                    size="small"
+                    variant="outlined"
+                  />
                 </Stack>
-                <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="body2">
+                <Typography
+                  color="text.secondary"
+                  sx={{ mt: 1.25 }}
+                  variant="body2"
+                >
                   {item.remaining} of {item.required} places are still available
                   for your profession on this shift.
                 </Typography>
@@ -118,7 +134,11 @@ export function AvailableShifts({
                   <Stack
                     direction="row"
                     spacing={1}
-                    sx={{ alignItems: "center", color: "warning.main", mt: 1.25 }}
+                    sx={{
+                      alignItems: "center",
+                      color: "warning.main",
+                      mt: 1.25,
+                    }}
                   >
                     <CircleAlert size={15} />
                     <Typography variant="caption">
@@ -144,7 +164,7 @@ export function AvailableShifts({
                       Claiming…
                     </>
                   ) : item.disabledReason ? (
-                    disabledLabels[item.disabledReason] ?? "Unavailable"
+                    (disabledLabels[item.disabledReason] ?? "Unavailable")
                   ) : (
                     "Claim shift"
                   )}
