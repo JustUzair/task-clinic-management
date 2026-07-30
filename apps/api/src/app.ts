@@ -2,7 +2,7 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import helmet from "helmet";
+import * as helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
@@ -33,7 +33,7 @@ app.use(
       request.headers["x-request-id"]?.toString() ?? crypto.randomUUID(),
   }),
 );
-app.use(helmet());
+app.use(helmet.default());
 app.use(
   compression({
     filter: (request, response) =>

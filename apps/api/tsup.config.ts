@@ -1,16 +1,14 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  bundle: true,
-  clean: true,
   entry: ["src/server.ts"],
-  format: ["cjs"],
-  minify: false,
-  noExternal: [/.*/],
-  outExtension: () => ({ js: ".cjs" }),
-  outDir: "dist",
-  platform: "node",
-  sourcemap: true,
-  splitting: false,
+  format: ["esm"],
   target: "node24",
+  outDir: "dist",
+  clean: true,
+  sourcemap: true,
+  minify: false, // Keep readable for debugging, set true for production
+  bundle: true,
+  splitting: false,
+  treeshake: true,
 });
