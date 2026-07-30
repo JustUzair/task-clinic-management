@@ -5,6 +5,7 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { CalendarRange } from "lucide-react";
 import type { PersonalAssignment } from "../../features/staff/types";
 import { LoadingIndicator } from "../loading-indicator";
 import { ShiftTime } from "./shift-time";
@@ -28,17 +29,46 @@ export function PersonalSchedule({
 }) {
   return (
     <Box component="section">
-      <Stack
-        direction="row"
-        sx={{ alignItems: "center", justifyContent: "space-between" }}
+      <Paper
+        sx={{ border: "1px solid", borderColor: "divider", p: 2.5 }}
+        variant="outlined"
       >
-        <Typography component="h2" variant="h6">
-          My schedule
-        </Typography>
-        {busy ? <LoadingIndicator label="Updating schedule…" /> : null}
-      </Stack>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={1.5}
+          sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}
+        >
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                alignItems: "center",
+                backgroundColor: "primary.light",
+                borderRadius: 3,
+                color: "primary.dark",
+                display: "flex",
+                height: 42,
+                justifyContent: "center",
+                width: 42,
+              }}
+            >
+              <CalendarRange size={18} />
+            </Box>
+            <Box>
+              <Typography component="h2" variant="h6">
+                My schedule
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                Upcoming, ongoing, completed, and removed shifts in one place.
+              </Typography>
+            </Box>
+          </Stack>
+          {busy ? <LoadingIndicator label="Updating schedule…" /> : null}
+        </Stack>
+      </Paper>
       <Paper
         sx={{
+          border: "1px solid",
+          borderColor: "divider",
           maxHeight: 420,
           mt: 2,
           overflowY: "auto",
@@ -49,7 +79,7 @@ export function PersonalSchedule({
         <Stack divider={<Divider flexItem />} spacing={2}>
           {groups.map(group => (
             <Box key={group.title}>
-              <Typography component="h3" sx={{ fontWeight: 600 }}>
+              <Typography component="h3" sx={{ fontWeight: 700 }}>
                 {group.title} ({group.assignments.length})
               </Typography>
               <Stack
@@ -59,7 +89,7 @@ export function PersonalSchedule({
               >
                 {group.assignments.map(assignment => (
                   <Box key={assignment.id}>
-                    <Typography sx={{ fontWeight: 500 }} variant="body2">
+                    <Typography sx={{ fontWeight: 600 }} variant="body2">
                       <ShiftTime time={assignment.shift.localTime} />
                     </Typography>
                     <Typography color="text.secondary" variant="caption">
