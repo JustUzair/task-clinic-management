@@ -20,6 +20,7 @@ import {
   type ShiftFormState,
   type StaffProfile,
 } from "./types";
+import { importTypeLabel } from "../../lib/display";
 
 function clinicToday(): string {
   return new Date().toLocaleDateString("en-CA", {
@@ -40,6 +41,10 @@ export function useManagerDashboard() {
   const [editingShiftId, setEditingShiftId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [error, setError] = useState("");
+  const [importFeedback, setImportFeedback] = useState<{
+    message: string;
+    severity: "error" | "success";
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -85,19 +90,42 @@ export function useManagerDashboard() {
   }, [load]);
 
   const runAndReload = useCallback(
-    async (action: string, operation: () => Promise<unknown>) => {
+    async (
+      action: string,
+      operation: () => Promise<unknown>,
+      options?: {
+        errorMessage?: string;
+        scope?: "import" | "page";
+        successMessage?: string;
+      },
+    ) => {
       setPendingAction(action);
-      setError("");
+      if (options?.scope === "import") {
+        setImportFeedback(null);
+      } else {
+        setError("");
+      }
       try {
         await operation();
         await load();
+        if (options?.scope === "import" && options.successMessage) {
+          setImportFeedback({
+            message: options.successMessage,
+            severity: "success",
+          });
+        }
         return true;
       } catch (requestError) {
-        setError(
+        const message =
           requestError instanceof Error
             ? requestError.message
-            : "The operation failed",
-        );
+            : (options?.errorMessage ?? "The operation failed");
+
+        if (options?.scope === "import") {
+          setImportFeedback({ message, severity: "error" });
+        } else {
+          setError(message);
+        }
         return false;
       } finally {
         setPendingAction(null);
@@ -124,6 +152,7 @@ export function useManagerDashboard() {
     cancel: (shiftId: string) =>
       runAndReload(`cancel:${shiftId}`, () => cancelShift(shiftId)),
     coverage,
+    clearImportFeedback: () => setImportFeedback(null),
     editingShiftId,
     edit: (shift: CoverageShift) => {
       setEditingShiftId(shift.id);
@@ -140,6 +169,7 @@ export function useManagerDashboard() {
     error,
     form,
     formOpen,
+    importFeedback,
     imports,
     loading,
     pendingAction,
@@ -175,7 +205,11 @@ export function useManagerDashboard() {
     setWeek,
     staff,
     upload: (type: "staff" | "shifts", file: File) =>
-      runAndReload(`upload:${type}`, () => uploadCsv(type, file)),
+      runAndReload(`upload:${type}`, () => uploadCsv(type, file), {
+        errorMessage: "The CSV import failed",
+        scope: "import",
+        successMessage: `${importTypeLabel(type)} CSV imported successfully.`,
+      }),
     unassign: (assignmentId: string) =>
       runAndReload(`unassign:${assignmentId}`, () =>
         unassignStaff(assignmentId),

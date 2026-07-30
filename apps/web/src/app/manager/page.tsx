@@ -175,7 +175,9 @@ export default function ManagerPage() {
 
             <ImportPanel
               busy={busy}
+              feedback={manager.importFeedback}
               imports={manager.imports}
+              onDismissFeedback={manager.clearImportFeedback}
               onUpload={manager.upload}
               pendingAction={manager.pendingAction}
             />

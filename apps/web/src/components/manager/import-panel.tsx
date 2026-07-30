@@ -27,12 +27,16 @@ import { ImportReportDetails } from "./import-report-details";
 
 export function ImportPanel({
   busy,
+  feedback,
   imports,
+  onDismissFeedback,
   onUpload,
   pendingAction,
 }: {
   busy: boolean;
+  feedback: { message: string; severity: "error" | "success" } | null;
   imports: ImportBatch[];
+  onDismissFeedback: () => void;
   onUpload: (type: "staff" | "shifts", file: File) => Promise<unknown>;
   pendingAction: string | null;
 }) {
@@ -91,6 +95,11 @@ export function ImportPanel({
           </Box>
         </Stack>
       </Paper>
+      {feedback ? (
+        <Alert onClose={onDismissFeedback} severity={feedback.severity}>
+          {feedback.message}
+        </Alert>
+      ) : null}
       <Box
         sx={{
           display: "grid",
@@ -108,6 +117,7 @@ export function ImportPanel({
           />
         ))}
       </Box>
+      {reportError ? <Alert severity="error">{reportError}</Alert> : null}
 
       <TableContainer
         component={Paper}
@@ -155,11 +165,6 @@ export function ImportPanel({
                         loading={loadingReport}
                         report={report}
                       />
-                      {reportError ? (
-                        <Alert severity="error" sx={{ m: 2, mt: 0 }}>
-                          {reportError}
-                        </Alert>
-                      ) : null}
                     </Collapse>
                   </TableCell>
                 </TableRow>

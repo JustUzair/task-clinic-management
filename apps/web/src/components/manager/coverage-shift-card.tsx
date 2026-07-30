@@ -207,7 +207,7 @@ export function CoverageShiftCard({
                 Updating…
               </>
             ) : (
-              "Assign staff"
+              "Assign"
             )}
           </Button>
         </Stack>
