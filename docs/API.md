@@ -100,6 +100,5 @@ The server sends `coverage.changed`, `schedule.changed`,
 Each event has an ID and reconnect interval; clients refetch authoritative
 PostgreSQL state. The current in-process fan-out assumes one API instance.
 Cross-instance fan-out is deferred until deployment scale requires it. The
-Vercel web deployment uses cached polling instead because function instances do
-not share the in-memory hub and long-running streams have a function-duration
-limit.
+current Render deployment keeps a single long-lived SSE process, so clients use
+the live event stream directly and refetch authoritative state on reconnect.

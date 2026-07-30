@@ -39,8 +39,8 @@ overlap, and lifecycle checks are enforced in transactions and constraints,
 not just in application code. Redis (Upstash) is scoped to OTP challenges and
 rate limiting; it is never required for scheduling correctness. SSE is a
 convenience layer — a client that misses an event simply refetches from
-Postgres. Long-running API deployments refetch on SSE invalidation; the Vercel
-deployment uses cached client queries with periodic authoritative refetches.
+Postgres. The current Render deployment keeps the SSE connection open and
+clients refetch authoritative state on reconnect or after a missed event.
 
 ---
 
@@ -121,8 +121,8 @@ API refuses to start if any are missing or malformed.
 
 | Variable(s)                                          | Where to get it                                                                                                                                                                                                     |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`, `DIRECT_URL`                         | [supabase.com](https://supabase.com) → create a project → **Project Settings → Database** → use the transaction pooler on port `6543` for Vercel runtime traffic and the direct connection only for migrations/bootstrap |
-| `DATABASE_POOL_MAX`                                 | Keep this small for serverless instances (`2` by default); Supavisor is the external pooler |
+| `DATABASE_URL`, `DIRECT_URL`                         | [supabase.com](https://supabase.com) → create a project → **Project Settings → Database** → use the transaction pooler on port `6543` for hosted application traffic and the direct connection only for migrations/bootstrap |
+| `DATABASE_POOL_MAX`                                 | Keep this small on hosted instances too (`2` by default); Supavisor is the external pooler |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | [console.upstash.com](https://console.upstash.com) → create a Redis database → **REST API** tab                                                                                                                     |
 | `MAILTRAP_API_KEY`, `MAILTRAP_INBOX_ID`              | [mailtrap.io](https://mailtrap.io) → **Email Testing → Inboxes** for the inbox ID, **Settings → API Tokens** for the key                                                                                            |
 | `SESSION_SECRET`, `OTP_HMAC_SECRET`                  | Generate locally — not a third-party key: `openssl rand -hex 32` (run twice, once per secret)                                                                                                                       |
@@ -189,41 +189,41 @@ Supabase database.
 
 - **SSE fan-out is single-instance.** Live updates are held in-process; a
   second API instance does not see another instance's events. This works for
-  the single-process Docker API, but Vercel Functions scale across instances
-  and terminate long-running requests at the plan's function-duration limit.
-  The web app therefore selects polling automatically for a `*.vercel.app` API
-  and refetches cached staff/notification queries every 10 seconds. A
-  persistent multi-instance API would use the Postgres `LISTEN/NOTIFY` bridge
-  described in `plans/006`.
+  the current single-process Docker and Render web-service deployments. If the
+  API is later scaled to multiple instances, cross-instance fan-out should move
+  to the Postgres `LISTEN/NOTIFY` bridge described in `plans/006`.
 - **Recurring shifts and staff-initiated release requests** are intentionally
   out of scope — see the "With more time" section of `DECISIONS.md`.
 
 ## Deployment
 
-The Express API uses Vercel's zero-configuration source entry point:
-`src/server.ts` exports the app as the function handler. Do not set a Vercel
-output directory or rewrite requests to `dist/server.js`; that build artifact
-is the standalone Node entry and is not a Vercel function handler.
+The current hosted setup runs on Render. The API is a Render Web Service rooted
+at `apps/api`; the web app can be deployed separately with
+`NEXT_PUBLIC_API_URL` pointing at the Render API origin.
 
 For the API project:
 
-- set the Vercel Root Directory to `apps/api`;
+- set the Render Root Directory to `apps/api`;
 - set `DATABASE_URL` to Supabase Supavisor **transaction mode** on port `6543`;
 - keep `DIRECT_URL` for migrations, not request traffic;
-- set `RUN_SEED_ON_START=false` in Vercel. Migrate and seed the target database
-  explicitly before deployment; function cold starts never run fixture imports;
+- set `RUN_SEED_ON_START=false` in Render after the target database has already
+  been migrated and seeded, so restarts do not re-run fixture bootstrap;
 - set `APP_ORIGIN` to the deployed web origin and use the documented
   cross-site cookie settings when the two deployments do not share a parent
-  domain.
+  domain;
+- set the health check path to `/api/v1/healthz` so Render only routes traffic
+  after the process is ready.
 
 For the web project, set `NEXT_PUBLIC_API_URL` to the deployed API origin.
-`NEXT_PUBLIC_REALTIME_TRANSPORT=auto` selects polling for a Vercel API and SSE
-elsewhere. Override it with `polling` or `sse` only when the API hosting model
-is known. The staff dashboard caches and deduplicates client requests, fetches
-available shifts 20 at a time, retains 50 historical assignments per response,
-and revalidates on focus, reconnect, mutation, and the realtime transport.
+`NEXT_PUBLIC_REALTIME_TRANSPORT=auto` keeps SSE for Render and other long-lived
+APIs, while still falling back to polling for `*.vercel.app` APIs. The staff
+dashboard caches and deduplicates client requests, fetches available shifts 20
+at a time, retains 50 historical assignments per response, and revalidates on
+focus, reconnect, mutation, and the realtime transport.
 
-Cold Vercel Functions still pay process startup plus the first Supabase network
-round trip. Keep the API function region near the Supabase project region; the
-bounded two-connection `pg` pool is reused by warm invocations and released
-before Fluid Compute suspension.
+Render cold starts depend on instance type. On Render Free, a web service spins
+down after 15 minutes without inbound traffic and can take about one minute to
+accept the next request. Paid Render web services do not spin down, but deploys
+and restarts still pay normal process startup plus the first Supabase network
+round trip. Render services also use an ephemeral filesystem, so uploaded or
+generated local files must not be treated as durable state.
