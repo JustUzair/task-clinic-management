@@ -98,6 +98,19 @@ pnpm db:migrate
 pnpm dev
 ```
 
+**Docker development with live reload** is the standard local workflow. It
+runs `next dev` for the frontend and uses Compose Watch to sync source changes
+into the containers. Save a frontend file and let Next.js refresh the
+browser—no rebuild or restart is needed.
+
+```sh
+docker compose up --watch
+```
+
+The first run builds the development images. Changes to `package.json` or
+`pnpm-lock.yaml` rebuild the affected image automatically; source changes use
+the frontend or API watch process. This requires Docker Compose 2.22 or newer.
+
 ---
 
 ## Environment variables and where to get them
