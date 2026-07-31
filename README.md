@@ -19,6 +19,10 @@ Full policy reasoning lives in [`DECISIONS.md`](DECISIONS.md), the API
 contract in [`docs/API.md`](docs/API.md), and the per-feature design process
 in [`plans/`](plans/) and [`AGENTS.md`](AGENTS.md).
 
+## Video demo
+
+[![Watch the demo](docs/thumbnail.png)](https://drive.google.com/file/d/1HwwvYJiAsMhNf2S546MRY5ifs7pAS_X0/view?usp=sharing)
+
 ## Live deployment
 
 - **App:** https://clms-justuzair-web.vercel.app/
