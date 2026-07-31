@@ -1,5 +1,15 @@
 # Clinic Shift Scheduler
 
+## Live deployment
+
+- **App:** https://clms-justuzair-web.vercel.app/
+- **API:** https://task-clinic-management.onrender.com
+
+Seeded on deploy via the same import pipeline as manager CSV uploads. The API
+runs on Render's free tier, which spins down after 15 minutes idle, the
+first request after a cold start (including the login page's initial session
+check) can take 30–60s; subsequent requests are fast.
+
 ![Node](https://img.shields.io/badge/Node.js-24.11-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-000000?logo=next.js&logoColor=white)
@@ -119,15 +129,15 @@ the frontend or API watch process. This requires Docker Compose 2.22 or newer.
 Every variable is documented in `.env.example` and validated at startup — the
 API refuses to start if any are missing or malformed.
 
-| Variable(s)                                          | Where to get it                                                                                                                                                                                                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable(s)                                          | Where to get it                                                                                                                                                                                                              |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`, `DIRECT_URL`                         | [supabase.com](https://supabase.com) → create a project → **Project Settings → Database** → use the transaction pooler on port `6543` for hosted application traffic and the direct connection only for migrations/bootstrap |
-| `DATABASE_POOL_MAX`                                 | Keep this small on hosted instances too (`2` by default); Supavisor is the external pooler |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | [console.upstash.com](https://console.upstash.com) → create a Redis database → **REST API** tab                                                                                                                     |
-| `MAILTRAP_API_KEY`, `MAILTRAP_INBOX_ID`              | [mailtrap.io](https://mailtrap.io) → **Email Testing → Inboxes** for the inbox ID, **Settings → API Tokens** for the key                                                                                            |
-| `SESSION_SECRET`, `OTP_HMAC_SECRET`                  | Generate locally — not a third-party key: `openssl rand -hex 32` (run twice, once per secret)                                                                                                                       |
-| `SEED_MANAGER_EMAIL`, `SEED_MANAGER_NAME`            | Your own choice — this becomes the seeded manager login                                                                                                                                                             |
-| `DEMO_AUTH_ENABLED`, `DEMO_OTP_CODE`                 | Optional; see Authentication below                                                                                                                                                                                  |
+| `DATABASE_POOL_MAX`                                  | Keep this small on hosted instances too (`2` by default); Supavisor is the external pooler                                                                                                                                   |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | [console.upstash.com](https://console.upstash.com) → create a Redis database → **REST API** tab                                                                                                                              |
+| `MAILTRAP_API_KEY`, `MAILTRAP_INBOX_ID`              | [mailtrap.io](https://mailtrap.io) → **Email Testing → Inboxes** for the inbox ID, **Settings → API Tokens** for the key                                                                                                     |
+| `SESSION_SECRET`, `OTP_HMAC_SECRET`                  | Generate locally — not a third-party key: `openssl rand -hex 32` (run twice, once per secret)                                                                                                                                |
+| `SEED_MANAGER_EMAIL`, `SEED_MANAGER_NAME`            | Your own choice — this becomes the seeded manager login                                                                                                                                                                      |
+| `DEMO_AUTH_ENABLED`, `DEMO_OTP_CODE`                 | Optional; see Authentication below                                                                                                                                                                                           |
 
 All Supabase and Upstash tiers used here are free.
 
