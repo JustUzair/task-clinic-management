@@ -106,6 +106,11 @@ export function NotificationInbox() {
     <Snackbar
       anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       open={showStatus}
+      sx={{
+        bottom: 16,
+        left: { sm: "auto", xs: 16 },
+        right: 16,
+      }}
     >
       <Alert
         action={
@@ -157,7 +162,7 @@ export function NotificationInbox() {
           ) : null
         }
         severity={error ? "error" : "info"}
-        sx={{ alignItems: "center", maxWidth: 420, width: "100%" }}
+        sx={{ alignItems: "center", maxWidth: 420, width: { sm: "100%", xs: "calc(100vw - 32px)" } }}
         variant="filled"
       >
         <AlertTitle>{error ? "Notification error" : "Schedule update"}</AlertTitle>

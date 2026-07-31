@@ -64,7 +64,11 @@ export default function StaffPage() {
               sx={{
                 display: "grid",
                 gap: 3,
-                gridTemplateColumns: { md: "repeat(2, minmax(0, 1fr))", xl: "repeat(4, minmax(0, 1fr))" },
+                gridTemplateColumns: {
+                  md: "repeat(2, minmax(0, 1fr))",
+                  xl: "repeat(4, minmax(0, 1fr))",
+                  xs: "minmax(0, 1fr)",
+                },
               }}
             >
               {stats.map(item => (

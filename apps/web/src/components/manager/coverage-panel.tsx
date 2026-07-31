@@ -17,6 +17,17 @@ import type {
 import { LoadingIndicator } from "../loading-indicator";
 import { CoverageShiftCard } from "./coverage-shift-card";
 
+const sectionIconSx = {
+  alignItems: "center",
+  backgroundColor: "primary.light",
+  borderRadius: 3,
+  color: "primary.dark",
+  display: "flex",
+  height: 42,
+  justifyContent: "center",
+  width: 42,
+} as const;
+
 export function CoveragePanel({
   assignmentChoice,
   busy,
@@ -68,18 +79,7 @@ export function CoveragePanel({
         >
           <Box sx={{ minWidth: 0 }}>
             <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
-              <Box
-                sx={{
-                  alignItems: "center",
-                  backgroundColor: "primary.light",
-                  borderRadius: 3,
-                  color: "primary.dark",
-                  display: "flex",
-                  height: 42,
-                  justifyContent: "center",
-                  width: 42,
-                }}
-              >
+              <Box sx={sectionIconSx}>
                 <CalendarDays size={18} />
               </Box>
               <div>
@@ -99,8 +99,16 @@ export function CoveragePanel({
               </Box>
             ) : null}
           </Box>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-            <ButtonGroup aria-label="Week navigation" variant="outlined">
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ display: { sm: "none", xs: "flex" } }}>
+              <Button disabled={busy} fullWidth onClick={() => moveWeek(-7)} variant="outlined">
+                Previous week
+              </Button>
+              <Button disabled={busy} fullWidth onClick={() => moveWeek(7)} variant="outlined">
+                Next week
+              </Button>
+            </Stack>
+            <ButtonGroup aria-label="Week navigation" sx={{ display: { sm: "inline-flex", xs: "none" } }} variant="outlined">
               <Button disabled={busy} onClick={() => moveWeek(-7)}>
                 Previous week
               </Button>
@@ -111,6 +119,7 @@ export function CoveragePanel({
             <TextField
               aria-label="Jump to week containing date"
               disabled={busy}
+              fullWidth
               onChange={event => onWeekChange(event.target.value)}
               size="small"
               type="date"

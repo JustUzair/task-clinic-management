@@ -3,6 +3,7 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
@@ -24,6 +25,23 @@ import type {
 } from "../../features/manager/types";
 import { importTypeLabel } from "../../lib/display";
 import { ImportReportDetails } from "./import-report-details";
+
+const sectionIconSx = {
+  alignItems: "center",
+  backgroundColor: "primary.light",
+  borderRadius: 3,
+  color: "primary.dark",
+  display: "flex",
+  height: 42,
+  justifyContent: "center",
+  width: 42,
+} as const;
+
+const metricsGridSx = {
+  display: "grid",
+  gap: 1,
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+} as const;
 
 export function ImportPanel({
   busy,
@@ -70,18 +88,7 @@ export function ImportPanel({
     <Stack component="section" spacing={2} sx={{ mt: 4 }}>
       <Paper sx={{ border: "1px solid", borderColor: "divider", p: 2.5 }} variant="outlined">
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Box
-            sx={{
-              alignItems: "center",
-              backgroundColor: "primary.light",
-              borderRadius: 3,
-              color: "primary.dark",
-              display: "flex",
-              height: 42,
-              justifyContent: "center",
-              width: 42,
-            }}
-          >
+          <Box sx={sectionIconSx}>
             <FileSpreadsheet size={18} />
           </Box>
           <Box>
@@ -94,6 +101,10 @@ export function ImportPanel({
             </Typography>
           </Box>
         </Stack>
+        <Divider sx={{ my: 2 }} />
+        <Typography color="text.secondary" variant="body2">
+          Upload, validate, and review row-level evidence from one place.
+        </Typography>
       </Paper>
       {feedback ? (
         <Alert onClose={onDismissFeedback} severity={feedback.severity}>
@@ -119,43 +130,56 @@ export function ImportPanel({
       </Box>
       {reportError ? <Alert severity="error">{reportError}</Alert> : null}
 
-      <TableContainer
-        component={Paper}
-        sx={{ border: "1px solid", borderColor: "divider" }}
+      <Paper
+        sx={{ border: "1px solid", borderColor: "divider", overflow: "hidden" }}
         variant="outlined"
       >
-        <Table aria-label="Import batches" size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>File</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Accepted</TableCell>
-              <TableCell>Merged</TableCell>
-              <TableCell>Rejected</TableCell>
-              <TableCell>Evidence</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {imports.map(batch => (
-              <Fragment key={batch.id}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>{batch.sourceFilename}</TableCell>
-                  <TableCell>{importTypeLabel(batch.type)}</TableCell>
-                  <TableCell>{batch.acceptedRows}</TableCell>
-                  <TableCell>{batch.mergedRows}</TableCell>
-                  <TableCell>{batch.rejectedRows}</TableCell>
-                  <TableCell>
+        <Box sx={{ p: 2.5 }}>
+          <Typography component="h3" sx={{ fontWeight: 700 }}>
+            Recent import batches
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+            Open any batch to inspect merged and rejected rows.
+          </Typography>
+        </Box>
+        <Divider />
+
+        <Box sx={{ display: { md: "none", xs: "block" }, p: 2 }}>
+          <Stack spacing={1.5}>
+            {imports.length === 0 ? (
+              <Typography color="text.secondary" variant="body2">
+                No imports yet.
+              </Typography>
+            ) : (
+              imports.map(batch => (
+                <Paper
+                  key={batch.id}
+                  sx={{ border: "1px solid", borderColor: "divider", p: 1.75 }}
+                  variant="outlined"
+                >
+                  <Stack spacing={1.5}>
+                    <Box>
+                      <Typography sx={{ fontWeight: 700 }} variant="body2">
+                        {batch.sourceFilename}
+                      </Typography>
+                      <Typography color="text.secondary" variant="caption">
+                        {importTypeLabel(batch.type)}
+                      </Typography>
+                    </Box>
+                    <Box sx={metricsGridSx}>
+                      <MetricChip label="Accepted" value={batch.acceptedRows} />
+                      <MetricChip label="Merged" value={batch.mergedRows} />
+                      <MetricChip label="Rejected" value={batch.rejectedRows} />
+                    </Box>
                     <Button
                       disabled={busy || loadingReport}
+                      fullWidth
                       onClick={() => void toggleReport(batch.id)}
                       size="small"
+                      variant={expandedId === batch.id ? "outlined" : "contained"}
                     >
-                      {expandedId === batch.id ? "Hide" : "View rows"}
+                      {expandedId === batch.id ? "Hide row evidence" : "View row evidence"}
                     </Button>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell colSpan={6} sx={{ p: 0 }}>
                     <Collapse
                       in={expandedId === batch.id}
                       timeout="auto"
@@ -166,13 +190,68 @@ export function ImportPanel({
                         report={report}
                       />
                     </Collapse>
-                  </TableCell>
-                </TableRow>
-              </Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  </Stack>
+                </Paper>
+              ))
+            )}
+          </Stack>
+        </Box>
+
+        <TableContainer
+          sx={{
+            display: { md: "block", xs: "none" },
+          }}
+        >
+          <Table aria-label="Import batches" size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>File</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Accepted</TableCell>
+                <TableCell>Merged</TableCell>
+                <TableCell>Rejected</TableCell>
+                <TableCell>Evidence</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {imports.map(batch => (
+                <Fragment key={batch.id}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>{batch.sourceFilename}</TableCell>
+                    <TableCell>{importTypeLabel(batch.type)}</TableCell>
+                    <TableCell>{batch.acceptedRows}</TableCell>
+                    <TableCell>{batch.mergedRows}</TableCell>
+                    <TableCell>{batch.rejectedRows}</TableCell>
+                    <TableCell>
+                      <Button
+                        disabled={busy || loadingReport}
+                        onClick={() => void toggleReport(batch.id)}
+                        size="small"
+                      >
+                        {expandedId === batch.id ? "Hide" : "View rows"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={6} sx={{ p: 0 }}>
+                      <Collapse
+                        in={expandedId === batch.id}
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <ImportReportDetails
+                          loading={loadingReport}
+                          report={report}
+                        />
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </Stack>
   );
 }
@@ -209,13 +288,10 @@ function UploadForm({
         <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
           <Box
             sx={{
-              alignItems: "center",
+              ...sectionIconSx,
               backgroundColor: "rgba(20, 125, 116, 0.08)",
-              borderRadius: 3,
               color: "primary.main",
-              display: "flex",
               height: 38,
-              justifyContent: "center",
               width: 38,
             }}
           >
@@ -229,7 +305,7 @@ function UploadForm({
           Expected headers: {expectedHeaders}
         </Typography>
         <Divider />
-        <Button component="label" disabled={busy} variant="outlined">
+        <Button component="label" disabled={busy} fullWidth variant="outlined">
           {file ? file.name : "Choose CSV file"}
           <Box
             accept=".csv,text/csv"
@@ -241,7 +317,7 @@ function UploadForm({
             type="file"
           />
         </Button>
-        <Button disabled={busy || !file} type="submit" variant="contained">
+        <Button disabled={busy || !file} fullWidth type="submit" variant="contained">
           {uploading ? (
             <>
               <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
@@ -253,5 +329,16 @@ function UploadForm({
         </Button>
       </Stack>
     </Paper>
+  );
+}
+
+function MetricChip({ label, value }: { label: string; value: number }) {
+  return (
+    <Chip
+      label={`${label}: ${value}`}
+      size="small"
+      sx={{ justifyContent: "flex-start" }}
+      variant="outlined"
+    />
   );
 }

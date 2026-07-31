@@ -91,7 +91,7 @@ export function AvailableShifts({
           sx={{
             display: "grid",
             gap: 2,
-            gridTemplateColumns: { md: "repeat(2, minmax(0, 1fr))" },
+            gridTemplateColumns: { md: "repeat(2, minmax(0, 1fr))", xs: "minmax(0, 1fr)" },
             mt: 2,
           }}
         >
@@ -110,7 +110,7 @@ export function AvailableShifts({
                     # {item.shift.externalShiftId}
                   </Typography>
                 ) : null}
-                <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 1.5, rowGap: 1 }}>
                   <Chip
                     color={item.remaining > 0 ? "success" : "default"}
                     label={`${item.remaining} open`}
@@ -150,6 +150,7 @@ export function AvailableShifts({
                   disabled={
                     busy || Boolean(item.disabledReason) || pendingId !== null
                   }
+                  fullWidth
                   onClick={() => void onClaim(item.shift.id)}
                   sx={{ mt: 2 }}
                   variant="contained"
@@ -187,6 +188,8 @@ export function AvailableShifts({
             color="primary"
             count={pagination.totalPages}
             disabled={busy || pendingId !== null}
+            siblingCount={0}
+            size="small"
             onChange={(_event, page) => onPageChange(page)}
             page={pagination.page}
           />

@@ -69,9 +69,9 @@ export function PersonalSchedule({
         sx={{
           border: "1px solid",
           borderColor: "divider",
-          maxHeight: 420,
+          maxHeight: { md: 420, xs: "none" },
           mt: 2,
-          overflowY: "auto",
+          overflowY: { md: "auto", xs: "visible" },
           p: 2,
         }}
         variant="outlined"
@@ -92,25 +92,27 @@ export function PersonalSchedule({
                     <Typography sx={{ fontWeight: 600 }} variant="body2">
                       <ShiftTime time={assignment.shift.localTime} />
                     </Typography>
-                    {assignment.shift.externalShiftId ? (
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 0.5, rowGap: 0.5 }}>
+                      {assignment.shift.externalShiftId ? (
+                        <Typography color="text.secondary" variant="caption">
+                          # {assignment.shift.externalShiftId}
+                        </Typography>
+                      ) : null}
                       <Typography color="text.secondary" variant="caption">
-                        # {assignment.shift.externalShiftId}
+                        {assignment.origin === "MANAGER_ASSIGNED"
+                          ? "Assigned by manager"
+                          : "Self-claimed"}
                       </Typography>
-                    ) : null}
-                    <Typography color="text.secondary" variant="caption">
-                      {" | "}
-                      {assignment.origin === "MANAGER_ASSIGNED"
-                        ? "Assigned by manager"
-                        : "Self-claimed"}
-                    </Typography>
+                    </Stack>
                     {group.unclaimable ? (
                       assignment.origin === "SELF_CLAIMED" ? (
                         <Button
                           color="error"
                           disabled={busy || pendingId !== null}
+                          fullWidth
                           onClick={() => void onUnclaim(assignment.id)}
                           size="small"
-                          sx={{ display: "block", mt: 0.5 }}
+                          sx={{ display: "block", mt: 1, maxWidth: { sm: 180, xs: "100%" } }}
                         >
                           {pendingId === assignment.id ? (
                             <>
@@ -128,7 +130,7 @@ export function PersonalSchedule({
                       ) : (
                         <Typography
                           color="text.secondary"
-                          sx={{ display: "block", mt: 0.5 }}
+                          sx={{ display: "block", mt: 1 }}
                           variant="caption"
                         >
                           Manager assignments can only be removed by a manager.

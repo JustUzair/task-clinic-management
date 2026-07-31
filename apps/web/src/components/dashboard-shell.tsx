@@ -233,14 +233,18 @@ export function DashboardShell({
             px: { xs: 0, md: 1 },
           }}
         >
-          <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 } }}>
+          <Container maxWidth="xl" sx={{ px: { xs: 1.5, md: 3 } }}>
             <Toolbar
               disableGutters
-              sx={{ gap: 2, justifyContent: "space-between" }}
+              sx={{
+                gap: 1.5,
+                justifyContent: "space-between",
+                minHeight: { xs: 64, sm: 72 },
+              }}
             >
               <Stack
                 direction="row"
-                spacing={1.5}
+                spacing={1}
                 sx={{ alignItems: "center", minWidth: 0 }}
               >
                 <IconButton
@@ -252,7 +256,11 @@ export function DashboardShell({
                 <Box sx={{ minWidth: 0 }}>
                   <Typography
                     color="primary"
-                    sx={{ fontWeight: 800, letterSpacing: "0.16em" }}
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      letterSpacing: "0.14em",
+                    }}
                     variant="overline"
                   >
                     {isManager ? "Manager console" : "Staff console"}
@@ -266,36 +274,13 @@ export function DashboardShell({
                   </Typography>
                 </Box>
               </Stack>
-              <Stack
-                direction="row"
-                spacing={1.25}
-                sx={{ alignItems: "center" }}
-              >
-                <Tooltip title="Live notifications appear in the bottom corner">
-                  <Badge color="primary" variant="dot">
-                    <Bell size={18} />
-                  </Badge>
-                </Tooltip>
-                <Avatar
-                  sx={{
-                    backgroundColor: "primary.light",
-                    color: "primary.dark",
-                    fontSize: 13,
-                    fontWeight: 800,
-                    height: 38,
-                    width: 38,
-                  }}
-                >
-                  {isManager ? "MG" : "ST"}
-                </Avatar>
-              </Stack>
             </Toolbar>
           </Container>
         </AppBar>
         <Container
           component="main"
           maxWidth="xl"
-          sx={{ px: { xs: 2, md: 3 }, py: 3 }}
+          sx={{ px: { xs: 1.5, md: 3 }, py: { xs: 2, md: 3 } }}
         >
           {children}
         </Container>

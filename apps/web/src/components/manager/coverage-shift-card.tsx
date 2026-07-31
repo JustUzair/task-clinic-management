@@ -70,16 +70,16 @@ export function CoverageShiftCard({
       }}
       variant="outlined"
     >
-      <CardContent sx={{ p: 2.5 }}>
+      <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
         <Stack
-          direction="row"
+          direction={{ xs: "column", sm: "row" }}
           spacing={2}
           sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
         >
-          <Stack spacing={1}>
+          <Stack spacing={1} sx={{ minWidth: 0 }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Clock3 size={16} />
-              <Typography sx={{ fontWeight: 700 }}>
+              <Typography sx={{ fontWeight: 700, wordBreak: "break-word" }}>
                 {shift.localTime.date} · {shift.localTime.startTime}–
                 {shift.localTime.endTime}
                 {shift.localTime.overnight ? " (+1 day)" : ""}
@@ -115,9 +115,15 @@ export function CoverageShiftCard({
         </Stack>
 
         <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1}
-          sx={{ mt: 2.5 }}
+          sx={{
+            display: "grid",
+            gap: 1,
+            gridTemplateColumns: {
+              sm: "repeat(3, minmax(0, 1fr))",
+              xs: "minmax(0, 1fr)",
+            },
+            mt: 2.5,
+          }}
         >
           {Object.entries(shift.roles).map(([role, value]) => (
             <Paper
@@ -125,7 +131,6 @@ export function CoverageShiftCard({
               sx={{
                 backgroundColor: "rgba(20, 125, 116, 0.04)",
                 borderColor: "rgba(20, 125, 116, 0.08)",
-                flex: 1,
                 p: 1.5,
               }}
               variant="outlined"
@@ -204,6 +209,7 @@ export function CoverageShiftCard({
           </FormControl>
           <Button
             disabled={immutable || busy || !assignmentChoice}
+            fullWidth
             onClick={() => void onAssign(shift.id)}
             startIcon={assigning ? undefined : <UserPlus2 size={16} />}
             variant="contained"
@@ -218,9 +224,14 @@ export function CoverageShiftCard({
             )}
           </Button>
         </Stack>
-        <Stack direction="row" spacing={1} sx={{ mt: 2.5 }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          sx={{ mt: 2.5 }}
+        >
           <Button
             disabled={immutable || busy}
+            fullWidth
             onClick={() => onEdit(shift)}
             size="small"
             startIcon={<PencilLine size={16} />}
@@ -230,6 +241,7 @@ export function CoverageShiftCard({
           </Button>
           <Button
             disabled={immutable || busy}
+            fullWidth
             onClick={() => void onCancel(shift.id)}
             size="small"
             variant="outlined"
@@ -239,6 +251,7 @@ export function CoverageShiftCard({
           <Button
             color="error"
             disabled={immutable || busy}
+            fullWidth
             onClick={() => void onArchive(shift.id)}
             size="small"
             startIcon={<Trash2 size={16} />}
