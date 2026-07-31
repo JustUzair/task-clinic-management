@@ -1,15 +1,5 @@
 # Clinic Shift Scheduler
 
-## Live deployment
-
-- **App:** https://clms-justuzair-web.vercel.app/
-- **API:** https://task-clinic-management.onrender.com
-
-Seeded on deploy via the same import pipeline as manager CSV uploads. The API
-runs on Render's free tier, which spins down after 15 minutes idle, the
-first request after a cold start (including the login page's initial session
-check) can take 30–60s; subsequent requests are fast.
-
 ![Node](https://img.shields.io/badge/Node.js-24.11-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-000000?logo=next.js&logoColor=white)
@@ -28,6 +18,16 @@ the database layer, not just in application code.
 Full policy reasoning lives in [`DECISIONS.md`](DECISIONS.md), the API
 contract in [`docs/API.md`](docs/API.md), and the per-feature design process
 in [`plans/`](plans/) and [`AGENTS.md`](AGENTS.md).
+
+## Live deployment
+
+- **App:** https://clms-justuzair-web.vercel.app/
+- **API:** https://task-clinic-management.onrender.com
+
+Seeded on deploy via the same import pipeline as manager CSV uploads. The API
+runs on Render's free tier, which spins down after 15 minutes idle, the
+first request after a cold start (including the login page's initial session
+check) can take 30–60s; subsequent requests are fast.
 
 ---
 
